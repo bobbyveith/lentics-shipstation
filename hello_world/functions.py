@@ -1,6 +1,6 @@
 import json, os, time, pyfiglet, classes, requests
 from dotenv import load_dotenv
-from shipstation_local.api import *
+from shipstation.api import *
 from classes import Order
 from ups_api import create_ups_session
 from fedex_api import create_fedex_session

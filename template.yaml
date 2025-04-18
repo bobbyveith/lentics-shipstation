@@ -16,6 +16,6 @@ Resources:
     Properties:
       CodeUri: shipstation_automation/
       Handler: app.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.11.12
       Architectures:
         - x86_64

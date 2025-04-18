@@ -19,3 +19,9 @@ Resources:
       Runtime: python3.11.12
       Architectures:
         - x86_64
+      Events:
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 10 ? * MON,TUE,WED,THU,FRI,SUN *)  # 10:30 AM UTC Mon-Fri,Sun
+            Description: "Triggers function to run on the specfied timer schedule"

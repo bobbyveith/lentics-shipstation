@@ -48,6 +48,7 @@ set_program_credentials_to_environment()
 
 def lambda_handler(event, context):
     try:
+        raise RuntimeError("End Test")
         main()
         # Send success message to SNS Topic
         sns_client = boto3.client('sns')

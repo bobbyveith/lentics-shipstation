@@ -5,18 +5,13 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import time
 import os
-import copy
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, Optional, Any
 
 from shipstation_automation.schemas.ups_schema import (
     UPSAuthCredentials, 
     UPSAuthResponse,
-    ShipmentOrigin,
-    ShipmentDestination, 
     TransitTimeRequest,
-    TransitTimeResponse,
-    UPSService,
-    ShippingRate
+    TransitTimeResponse
 )
 
 class UPSAuthToken:
@@ -135,7 +130,7 @@ class UPSAPIClient:
         
         Args:
             auth_token: UPS authentication token manager
-                      If None, a new UPSAuthToken instance will be created
+                        If None, a new UPSAuthToken instance will be created
         """
         self.auth = auth_token if auth_token else UPSAuthToken()
         self.session = requests.Session()
@@ -167,7 +162,7 @@ class UPSAPIClient:
     def make_request(
         self, 
         endpoint: str, 
-        method: str = 'GET', 
+        method: str, 
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -226,46 +221,6 @@ class UPSAPIClient:
             print(f"[X] Failed to get delivery times: {e}")
             raise
             
-    def create_transit_time_request_from_order(self, order: Any) -> TransitTimeRequest:
-        """
-        Create a transit time request from order data.
-        
-        Args:
-            order: Order object with customer and shipment information
-            
-        Returns:
-            TransitTimeRequest: Transit time request for UPS API
-        """
-        origin = ShipmentOrigin(
-            country_code="US",
-            city_name=order.Shipment.from_city,
-            postal_code=order.Shipment.from_postal_code
-        )
-        
-        destination = ShipmentDestination(
-            country_code=order.Customer.country if order.Customer.country in ["US", "CA"] else 'US',
-            state_province=order.Customer.state,
-            city_name=order.Customer.city,
-            postal_code=order.Customer.postal_code.replace("-", "")
-        )
-        
-        # Calculate weight in KGS if provided in ounces
-        weight = str(0.028 * order.Shipment.weight["value"]) if (
-            hasattr(order.Shipment, 'weight') and 
-            order.Shipment.weight.get("units") == "ounces"
-        ) else "5"
-        
-        # Determine if residential
-        residential_indicator = "01" if order.Customer.is_residential else "02"
-        
-        return TransitTimeRequest(
-            origin=origin,
-            destination=destination,
-            weight=weight,
-            ship_date=order.ship_date,
-            residential_indicator=residential_indicator
-        )
-    
 
 if __name__ == '__main__':
     try:

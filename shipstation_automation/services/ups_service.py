@@ -1,14 +1,14 @@
 # lentics-shipstation/shipstation_automation/services/ups_service.py
 import copy
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
+from typing import List, Optional, Any
 
 from shipstation_automation.integrations.ups_api import UPSAPIClient
 from shipstation_automation.schemas.ups_schema import (
     ShipmentOrigin,
     ShipmentDestination,
     TransitTimeRequest,
-    UPSService,
+    UPSServiceOption,
     ShippingRate
 )
 
@@ -26,7 +26,7 @@ class UPSService:
         
         Args:
             api_client: UPS API client to use for API requests
-                      If None, a new UPSAPIClient instance will be created
+                        If None, a new UPSAPIClient instance will be created
         """
         self.api_client = api_client if api_client else UPSAPIClient()
         
@@ -115,7 +115,7 @@ class UPSService:
             print(f"[X] Failed to get best rate: {e}")
             return None
     
-    def _filter_valid_services(self, order: Any, services: List[UPSService]) -> List[UPSService]:
+    def _filter_valid_services(self, order: Any, services: List[UPSServiceOption]) -> List[UPSServiceOption]:
         """
         Filter services that will arrive on or before the latest delivery date.
         
@@ -139,7 +139,7 @@ class UPSService:
                 
         return valid_services
     
-    def _add_ground_saver_to_list(self, services: List[UPSService]) -> List[UPSService]:
+    def _add_ground_saver_to_list(self, services: List[UPSServiceOption]) -> List[UPSServiceOption]:
         """
         Add Ground Saver service option based on UPS Ground service.
         
@@ -185,7 +185,7 @@ class UPSService:
             
         return services
     
-    def _get_valid_rates(self, order: Any, services: List[UPSService]) -> List[ShippingRate]:
+    def _get_valid_rates(self, order: Any, services: List[UPSServiceOption]) -> List[ShippingRate]:
         """
         Get valid rates for services based on ShipStation data.
         

@@ -265,3 +265,11 @@ class UPSAPIClient:
             ship_date=order.ship_date,
             residential_indicator=residential_indicator
         )
+    
+
+if __name__ == '__main__':
+    try:
+        print("[X] This file is not meant to be executed directly. Check for the main.py file.")
+    except Exception as e:
+        print('Error:', e)
+        raise SystemExit("End Test")

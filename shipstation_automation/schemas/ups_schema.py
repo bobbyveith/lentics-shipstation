@@ -78,7 +78,7 @@ class TransitTimeRequest:
         }
 
 @dataclass
-class UPSService:
+class UPSServiceOption:
     """UPS shipping service option model"""
     service_level: str
     service_level_description: str
@@ -88,8 +88,8 @@ class UPSService:
     delivery_day_of_week: str
     
     @classmethod
-    def from_api_response(cls, service_data: Dict[str, Any]) -> 'UPSService':
-        """Create a UPSService instance from API response data"""
+    def from_api_response(cls, service_data: Dict[str, Any]) -> 'UPSServiceOption':
+        """Create a UPSServiceOption instance from API response data"""
         delivery_date = datetime.strptime(service_data['deliveryDate'], '%Y-%m-%d') \
             if isinstance(service_data['deliveryDate'], str) else service_data['deliveryDate']
             
@@ -105,14 +105,14 @@ class UPSService:
 @dataclass
 class TransitTimeResponse:
     """UPS transit time API response model"""
-    services: List[UPSService] = field(default_factory=list)
+    services: List[UPSServiceOption] = field(default_factory=list)
     
     @classmethod
     def from_api_response(cls, response_data: Dict[str, Any]) -> 'TransitTimeResponse':
         """Create a TransitTimeResponse instance from API response data"""
         services = []
         for service_data in response_data.get("emsResponse", {}).get("services", []):
-            services.append(UPSService.from_api_response(service_data))
+            services.append(UPSServiceOption.from_api_response(service_data))
         
         return cls(services=services)
 

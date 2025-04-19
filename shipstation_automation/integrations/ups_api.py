@@ -11,7 +11,8 @@ from shipstation_automation.schemas.ups_schema import (
     UPSAuthCredentials, 
     UPSAuthResponse,
     TransitTimeRequest,
-    TransitTimeResponse
+    TransitTimeResponse,
+    UPSServiceOption
 )
 
 class UPSAuthToken:
@@ -135,7 +136,7 @@ class UPSAPIClient:
         self.auth = auth_token if auth_token else UPSAuthToken()
         self.session = requests.Session()
         
-    def _get_headers(self) -> Dict[str, str]:
+    def get_headers(self) -> Dict[str, str]:
         """
         Get headers for UPS API requests with authentication.
         
@@ -182,7 +183,7 @@ class UPSAPIClient:
             Exception: If the API request fails
         """
         url = f"{self.BASE_URL}{endpoint}"
-        headers = self._get_headers()
+        headers = self.get_headers()
         
         try:
             if method.upper() == 'GET':

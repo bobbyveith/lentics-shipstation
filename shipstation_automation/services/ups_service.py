@@ -124,7 +124,7 @@ class UPSService:
             services: List of UPS services
             
         Returns:
-            List[UPSService]: Filtered list of valid services
+            List[UPSServiceOption]: Filtered list of valid services
         """
         valid_services = []
         
@@ -147,7 +147,7 @@ class UPSService:
             services: List of UPS services
             
         Returns:
-            List[UPSService]: Updated list with Ground Saver service if applicable
+            List[UPSServiceOption]: Updated list with Ground Saver service if applicable
         """
         # Helper function to add days to a date
         def add_days(delivery_date, number_of_days):

@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json, os
 from main import main
+from shipstation_automation.utils.logger import setup_logging, get_logger
 
 
 # Initialize AWS Secrets Manager client
@@ -47,9 +48,15 @@ def set_program_credentials_to_environment():
 set_program_credentials_to_environment()
 
 def lambda_handler(event, context):
+    """Lambda function handler"""
+    # Set up logging for this run
+    setup_logging()
+    logger = get_logger('app')
+    
     try:
-        raise RuntimeError("End Test")
+        logger.info("Starting Shipstation Automation Lambda function")
         main()
+        
         # Send success message to SNS Topic
         sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
@@ -57,10 +64,20 @@ def lambda_handler(event, context):
             TopicArn=topic_arn,
             Message='[+] Shipstation Automation Ran Successfuly!',
             Subject='SS_Automation Successful'
-            )
-        return {'statusCode' : 200}
+        )
+        
+        logger.info("Shipstation Automation completed successfully")
+        # Flush any logs to S3 in production
+        for handler in logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+                
+        return {'statusCode': 200}
 
     except Exception as e:
+        # Log the error
+        logger.error(f"Shipstation Automation failed: {str(e)}", exc_info=True)
+        
         # Send Error message to SNS Topic
         sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
@@ -69,4 +86,10 @@ def lambda_handler(event, context):
             Message=f'[X] ERROR: Shipstation Automation did not run because: {e}',
             Subject='Error on SS_Automation Lambda'
         )
-        return {'statusCode' : 500}
+        
+        # Flush any logs to S3 in production
+        for handler in logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+                
+        return {'statusCode': 500}

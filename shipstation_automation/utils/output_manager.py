@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 # Import logger functions without creating circular imports
-from app.utils.logger import get_logger
+from shipstation_automation.utils.logger import get_logger
 
 class OutputManager:
     """

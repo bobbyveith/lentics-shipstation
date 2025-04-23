@@ -3,30 +3,36 @@ disable_existing_loggers: false
 
 formatters:
   simple:
-    '()': app.utils.logger.ColorAwareFormatter
+    '()': shipstation_automation.utils.logger.ColorAwareFormatter
     format: '%(message)s'
   
   detailed:
     format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     datefmt: '%Y-%m-%d %H:%M:%S'
 
+  lambda:
+    format: '[%(levelname)s] %(name)s - %(message)s'
+
 handlers:
   console:
     class: logging.StreamHandler
     level: INFO
-    formatter: simple
+    formatter: lambda
     stream: ext://sys.stdout
-  
-  file:
-    class: logging.FileHandler
-    level: INFO
-    formatter: detailed
-    filename: app/logs/production.log
-    mode: 'a'
 
 loggers:
-  app:  # Core application logs
+  shipstation_automation:  # Core application logs
     level: INFO
-    handlers: [file, console]
+    handlers: [console]
     propagate: false
+    
+  shipstation_automation.debug:  # Development debugging
+    level: DEBUG
+    handlers: [console]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console]
+  propagate: false
     

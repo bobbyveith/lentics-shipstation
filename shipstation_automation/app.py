@@ -110,7 +110,6 @@ def lambda_handler(event, context):
         output.print_section_item(f"Error: {str(e)}", log_level="error", color="red")
         
         # Send Error message to SNS Topic
-        topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
         send_sns_notification(
             f'[X] ERROR: Shipstation Automation did not run because: {e}',
             'Error on SS_Automation Lambda'

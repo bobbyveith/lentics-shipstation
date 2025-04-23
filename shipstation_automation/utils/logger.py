@@ -1,6 +1,9 @@
 import os
 import logging
 import logging.config
+import yaml
+from shipstation_automation.config.config import ENV
+from shipstation_automation.integrations.aws_s3 import S3BucketIntegration
 
 class ConsoleLogger(logging.Logger):
     def console_info(self, msg, *args, **kwargs):
@@ -39,12 +42,9 @@ def upload_logs_to_s3(bucket_name: str, env: str, log_content: str) -> bool:
     s3 = S3BucketIntegration(bucket_name)
     return s3.upload_log_file(env, log_content)
 
-def setup_logging(env: str = 'development'):
+def setup_logging():
     """Initialize logging configuration"""
-    if env == 'default':
-        env = 'development'
-    
-    print(f"Setting up logging for environment: {env}")
+    env = ENV
     config_path = os.path.join('app', 'config', 'logging', f'{env}.yaml')
     
     if os.path.exists(config_path):
@@ -61,9 +61,9 @@ def setup_logging(env: str = 'development'):
 
 def get_logger(module_name: str) -> logging.Logger:
     """Get a logger with standardized naming"""
-    if module_name.startswith('app.'):
+    if module_name.startswith('shipstation_automation.'):
         return logging.getLogger(module_name)
-    return logging.getLogger(f'app.{module_name}')
+    return logging.getLogger(f'shipstation_automation.{module_name}')
 
 
     

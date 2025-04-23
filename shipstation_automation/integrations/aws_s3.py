@@ -5,7 +5,7 @@ import logging
 from io import BytesIO
 from datetime import datetime
 import pytz
-from shipstation_automation.config.config import TIMEZONE
+from config.config import TIMEZONE
 
 class S3BucketIntegration:
     def __init__(self, bucket_name, region_name='us-east-2'):

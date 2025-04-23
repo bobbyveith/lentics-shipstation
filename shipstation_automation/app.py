@@ -2,8 +2,8 @@ import boto3
 from botocore.exceptions import ClientError
 import json, os
 from main import main
-from shipstation_automation.utils.logger import setup_logging
-from shipstation_automation.utils.output_manager import OutputManager
+from utils.logger import setup_logging
+from utils.output_manager import OutputManager
 
 # Initialize AWS Secrets Manager client
 session = boto3.session.Session()

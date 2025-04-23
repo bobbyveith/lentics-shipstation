@@ -2,7 +2,7 @@ import functions
 import ups_api
 from usps_api import get_usps_best_rate
 from fedex_api import get_fedex_best_rate
-from utils import list_account_tags
+from utils.utils import list_account_tags
 import customer_log as cl
 
 

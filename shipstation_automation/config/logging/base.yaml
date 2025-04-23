@@ -2,18 +2,31 @@ version: 1
 disable_existing_loggers: false
 
 formatters:
-  detailed: &detailed_formatter
-    format: '[%(asctime)s] %(levelname)s - %(name)s:%(funcName)s:%(lineno)d - %(message)s'
-    datefmt: '%Y-%m-%d %H:%M:%S'
-  simple: &simple_formatter
-    format: '%(levelname)s - %(message)s'
+  standard:
+    '()': shipstation_automation.utils.logger.ColorAwareFormatter
+    format: '[%(levelname)s] %(name)s - %(message)s'
 
 handlers:
-  file: &file_handler
-    class: logging.handlers.RotatingFileHandler
+  console:
+    class: logging.StreamHandler
     level: DEBUG
-    formatter: detailed
+    formatter: standard
+    stream: ext://sys.stdout
+  
+  file:
+    class: logging.FileHandler
+    level: INFO
+    formatter: standard
     filename: logs/app.log
-    maxBytes: 5242880  # 5MB
-    backupCount: 2
-    encoding: utf8
+    mode: 'a'
+
+loggers:
+  shipstation_automation:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console, file]
+  propagate: false

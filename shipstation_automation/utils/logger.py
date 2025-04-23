@@ -90,7 +90,22 @@ def setup_logging():
             if not os.path.exists(logs_dir):
                 os.makedirs(logs_dir)
                 
-            config['handlers']['file']['filename'] = os.path.join(logs_dir, f'{env}.log')
+            log_file_path = os.path.join(logs_dir, f'{env}.log')
+            
+            # In development, clear the existing log file
+            if env == 'development':
+                # Change file mode to 'w' to overwrite instead of append
+                config['handlers']['file']['mode'] = 'w'
+                
+                # Optionally, also clear the file directly to ensure it's empty
+                # (this helps in case the handler keeps the file open across runs)
+                try:
+                    open(log_file_path, 'w').close()
+                except:
+                    pass
+            
+            # Set the log file path
+            config['handlers']['file']['filename'] = log_file_path
             
             # Add S3 upload handler in production
             if env == 'production':

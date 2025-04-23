@@ -76,43 +76,41 @@ def upload_logs_to_s3(bucket_name: str, env: str, log_content: str) -> bool:
     return s3.upload_log_file(env, log_content)
 
 def setup_logging():
-    """Initialize logging configuration for the appropriate environment"""
+    """Initialize logging configuration"""
     env = ENV
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = os.path.join(base_dir, 'config', 'logging', f'{env}.yaml')
+    config_path = os.path.join(base_dir, 'config', 'logging', 'logging.yaml')
     
     if os.path.exists(config_path):
         with open(config_path, 'rt') as f:
             config = yaml.safe_load(f)
             
-            # For Lambda, ensure we have the right handlers
+            # Ensure logs directory exists and update file path
+            logs_dir = os.path.join(base_dir, 'logs')
+            if not os.path.exists(logs_dir):
+                os.makedirs(logs_dir)
+                
+            config['handlers']['file']['filename'] = os.path.join(logs_dir, f'{env}.log')
+            
+            # Add S3 upload handler in production
             if env == 'production':
-                # Create a Lambda memory handler for production
-                lambda_handler = {
+                config['handlers']['lambda_memory'] = {
                     'class': 'shipstation_automation.utils.logger.LambdaMemoryHandler',
                     'level': 'INFO',
                     'bucket_name': S3_LOG_BUCKET_NAME,
                     'env': env,
-                    'formatter': 'detailed'
+                    'formatter': 'standard'
                 }
-                config['handlers']['lambda_memory'] = lambda_handler
                 
-                # Add the handler to all loggers
+                # Add handler to all loggers
                 for logger_name in config.get('loggers', {}):
                     config['loggers'][logger_name]['handlers'].append('lambda_memory')
-            else:
-                # For development ensure we have a local log file
-                logs_dir = os.path.join(base_dir, 'logs')
-                if not os.path.exists(logs_dir):
-                    os.makedirs(logs_dir)
-                    
-                if 'handlers' in config and 'file' in config['handlers']:
-                    config['handlers']['file']['filename'] = os.path.join(logs_dir, f'{env}.log')
+                config['root']['handlers'].append('lambda_memory')
         
-        # Configure logging using our modified config
+        # Configure logging
         logging.config.dictConfig(config)
         
-        # Register a hook to flush logs on Lambda shutdown
+        # Register hook for production
         if env == 'production':
             import atexit
             atexit.register(lambda: logging.getLogger().handlers[0].flush())

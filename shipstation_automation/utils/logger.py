@@ -75,62 +75,79 @@ def upload_logs_to_s3(bucket_name: str, env: str, log_content: str) -> bool:
     s3 = S3BucketIntegration(bucket_name)
     return s3.upload_log_file(env, log_content)
 
-def setup_logging():
-    """Initialize logging configuration"""
-    env = ENV
+def _configure_log_directory():
+    """Create and return the logs directory path"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = os.path.join(base_dir, 'config', 'logging', 'logging.yaml')
-    
-    if os.path.exists(config_path):
-        with open(config_path, 'rt') as f:
-            config = yaml.safe_load(f)
-            
-            # Ensure logs directory exists and update file path
-            logs_dir = os.path.join(base_dir, 'logs')
-            if not os.path.exists(logs_dir):
-                os.makedirs(logs_dir)
-                
-            log_file_path = os.path.join(logs_dir, f'{env}.log')
-            
-            # In development, clear the existing log file
-            if env == 'development':
-                # Change file mode to 'w' to overwrite instead of append
-                config['handlers']['file']['mode'] = 'w'
-                
-                # Optionally, also clear the file directly to ensure it's empty
-                # (this helps in case the handler keeps the file open across runs)
-                try:
-                    open(log_file_path, 'w').close()
-                except:
-                    pass
-            
-            # Set the log file path
-            config['handlers']['file']['filename'] = log_file_path
-            
-            # Add S3 upload handler in production
-            if env == 'production':
-                config['handlers']['lambda_memory'] = {
-                    'class': 'shipstation_automation.utils.logger.LambdaMemoryHandler',
-                    'level': 'INFO',
-                    'bucket_name': S3_LOG_BUCKET_NAME,
-                    'env': env,
-                    'formatter': 'standard'
-                }
-                
-                # Add handler to all loggers
-                for logger_name in config.get('loggers', {}):
-                    config['loggers'][logger_name]['handlers'].append('lambda_memory')
-                config['root']['handlers'].append('lambda_memory')
-        
-        # Configure logging
-        logging.config.dictConfig(config)
-        
-        # Register hook for production
-        if env == 'production':
-            import atexit
-            atexit.register(lambda: logging.getLogger().handlers[0].flush())
-    else:
+    logs_dir = os.path.join(base_dir, 'logs')
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+    return base_dir, logs_dir
+
+def _load_logging_config(config_path):
+    """Load the logging configuration from YAML file"""
+    if not os.path.exists(config_path):
         raise Exception(f"Logging configuration file not found at: {config_path}")
+        
+    with open(config_path, 'rt') as f:
+        return yaml.safe_load(f)
+
+def _configure_dev_logging(config, log_file_path):
+    """Configure development-specific logging settings"""
+    # Change file mode to 'w' to overwrite instead of append
+    config['handlers']['file']['mode'] = 'w'
+    
+    # Clear the file directly to ensure it's empty
+    try:
+        open(log_file_path, 'w').close()
+    except:
+        pass
+    
+    return config
+
+def _configure_prod_logging(config):
+    """Configure production-specific logging settings"""
+    # Add S3 upload handler
+    config['handlers']['lambda_memory'] = {
+        'class': 'shipstation_automation.utils.logger.LambdaMemoryHandler',
+        'level': 'INFO',
+        'bucket_name': S3_LOG_BUCKET_NAME,
+        'env': ENV,
+        'formatter': 'standard'
+    }
+    
+    # Add handler to all loggers
+    for logger_name in config.get('loggers', {}):
+        config['loggers'][logger_name]['handlers'].append('lambda_memory')
+    config['root']['handlers'].append('lambda_memory')
+    
+    return config
+
+def setup_logging():
+    """Initialize logging configuration for the current environment"""
+    # Get directory paths
+    base_dir, logs_dir = _configure_log_directory()
+    
+    # Load config file
+    config_path = os.path.join(base_dir, 'config', 'logging', 'logging.yaml')
+    config = _load_logging_config(config_path)
+    
+    # Set log file path
+    log_file_path = os.path.join(logs_dir, f'{ENV}.log')
+    config['handlers']['file']['filename'] = log_file_path
+    
+    # Apply environment-specific configuration
+    if ENV == 'development':
+        config = _configure_dev_logging(config, log_file_path)
+    elif ENV == 'production':
+        config = _configure_prod_logging(config)
+    
+    # Configure logging
+    logging.config.dictConfig(config)
+    
+    # Register hook for production
+    if ENV == 'production':
+        import atexit
+        atexit.register(lambda: logging.getLogger().handlers[0].flush())
 
 def get_logger(module_name: str) -> logging.Logger:
     """Get a logger with standardized naming"""

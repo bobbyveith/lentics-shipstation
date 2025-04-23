@@ -2,7 +2,7 @@
     This file contains the classes for the ShipStation API..
 """
 from datetime import datetime, timedelta
-from utils.utils import get_ship_date
+from shipstation_automation.utils.utils import get_ship_date
 
 __author__ = ["Rafael Malcervelli", "Bobby Veith"]
 __company__ = "Lentics, Inc."

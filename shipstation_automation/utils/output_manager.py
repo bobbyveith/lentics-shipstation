@@ -1,9 +1,8 @@
-from typing import List, Dict, Any, Optional
+from typing import Optional
 import logging
-from datetime import datetime
 
 # Import logger functions without creating circular imports
-from utils.logger import get_logger
+from shipstation_automation.utils.logger import get_logger
 
 class OutputManager:
     """

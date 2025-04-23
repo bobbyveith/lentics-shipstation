@@ -1,9 +1,9 @@
-import functions
-import ups_api
-from usps_api import get_usps_best_rate
-from fedex_api import get_fedex_best_rate
-from utils.utils import list_account_tags
-import customer_log as cl
+import shipstation_automation.functions as functions
+import shipstation_automation.ups_api as ups_api
+from shipstation_automation.usps_api import get_usps_best_rate
+from shipstation_automation.fedex_api import get_fedex_best_rate
+from shipstation_automation.utils.utils import list_account_tags
+import shipstation_automation.customer_log as cl
 
 
 __author__ = ["Rafael Malcervelli", "Bobby Veith"]

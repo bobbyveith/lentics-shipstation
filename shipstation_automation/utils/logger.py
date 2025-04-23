@@ -2,10 +2,9 @@ import os
 import logging
 import logging.config
 import yaml
-from datetime import datetime
 import io
-from config.config import ENV, S3_LOG_BUCKET_NAME
-from integrations.aws_s3 import S3BucketIntegration
+from shipstation_automation.config.config import ENV, S3_LOG_BUCKET_NAME
+from shipstation_automation.integrations.aws_s3 import S3BucketIntegration
 
 class ConsoleLogger(logging.Logger):
     def console_info(self, msg, *args, **kwargs):
@@ -78,9 +77,13 @@ def upload_logs_to_s3(bucket_name: str, env: str, log_content: str) -> bool:
 def _configure_log_directory():
     """Create and return the logs directory path"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    logs_dir = os.path.join(base_dir, 'logs')
+    
+    # Always use /tmp for logs when running in containers or Lambda
+    logs_dir = '/tmp/logs'
+    
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
+        
     return base_dir, logs_dir
 
 def _load_logging_config(config_path):
@@ -91,16 +94,25 @@ def _load_logging_config(config_path):
     with open(config_path, 'rt') as f:
         return yaml.safe_load(f)
 
-def _configure_dev_logging(config, log_file_path):
+def _configure_dev_logging(config):
     """Configure development-specific logging settings"""
-    # Change file mode to 'w' to overwrite instead of append
-    config['handlers']['file']['mode'] = 'w'
+    # Remove file handler if it exists
+    if 'file' in config['handlers']:
+        del config['handlers']['file']
     
-    # Clear the file directly to ensure it's empty
-    try:
-        open(log_file_path, 'w').close()
-    except:
-        pass
+    # Remove file handler from all loggers
+    for logger_name in config.get('loggers', {}):
+        handlers = config['loggers'][logger_name].get('handlers', [])
+        if 'file' in handlers:
+            handlers.remove('file')
+            config['loggers'][logger_name]['handlers'] = handlers
+    
+    # Remove from root logger too
+    if 'root' in config and 'handlers' in config['root']:
+        handlers = config['root']['handlers']
+        if 'file' in handlers:
+            handlers.remove('file')
+            config['root']['handlers'] = handlers
     
     return config
 
@@ -131,14 +143,14 @@ def setup_logging():
     config_path = os.path.join(base_dir, 'config', 'logging', 'logging.yaml')
     config = _load_logging_config(config_path)
     
-    # Set log file path
-    log_file_path = os.path.join(logs_dir, f'{ENV}.log')
-    config['handlers']['file']['filename'] = log_file_path
-    
     # Apply environment-specific configuration
     if ENV == 'development':
-        config = _configure_dev_logging(config, log_file_path)
+        # In development, remove file handler
+        config = _configure_dev_logging(config)
     elif ENV == 'production':
+        # In production, configure file and S3 logging
+        log_file_path = os.path.join(logs_dir, f'{ENV}.log')
+        config['handlers']['file']['filename'] = log_file_path
         config = _configure_prod_logging(config)
     
     # Configure logging

@@ -3,8 +3,8 @@ import copy
 from datetime import datetime, timedelta
 from typing import List, Optional, Any
 
-from integrations.ups_api import UPSAPIClient
-from schemas.ups_schema import (
+from shipstation_automation.integrations.ups_api import UPSAPIClient
+from shipstation_automation.schemas.ups_schema import (
     ShipmentOrigin,
     ShipmentDestination,
     TransitTimeRequest,

@@ -1,12 +1,10 @@
-import datetime
 import time
-from decimal import Decimal
 import json
 import pprint
 import requests
 import base64
-from shipstation.models import *
-from shipstation.constants import *
+from shipstation_automation.shipstation.models import *
+from shipstation_automation.shipstation.constants import *
 
 
 class ShipStation(ShipStationBase):

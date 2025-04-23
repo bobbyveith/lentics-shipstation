@@ -7,7 +7,7 @@ import time
 import os
 from typing import Dict, Optional, Any
 
-from schemas.ups_schema import (
+from shipstation_automation.schemas.ups_schema import (
     UPSAuthCredentials, 
     UPSAuthResponse,
     TransitTimeRequest,

@@ -3,7 +3,7 @@ disable_existing_loggers: false
 
 formatters:
   standard:
-    '()': utils.logger.ColorAwareFormatter
+    '()': shipstation_automation.utils.logger.ColorAwareFormatter
     format: '[%(levelname)s] %(name)s - %(message)s'
 
 handlers:

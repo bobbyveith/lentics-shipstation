@@ -1,10 +1,10 @@
-import json, os, time, pyfiglet, classes, requests
 from dotenv import load_dotenv
-from shipstation.api import *
-from classes import Order
-from ups_api import create_ups_session
-from fedex_api import create_fedex_session
-from customer_log import create_s3_client_session
+import json, os, time, pyfiglet, requests
+from shipstation_automation.shipstation.api import *
+from shipstation_automation.classes import Order
+from shipstation_automation.ups_api import create_ups_session
+from shipstation_automation.fedex_api import create_fedex_session
+from shipstation_automation.customer_log import create_s3_client_session
 
 
 __author__ = ["Rafael Malcervelli", "Bobby Veith"]
@@ -711,7 +711,7 @@ def decode_response(dict_of_order_responses):
 
 
                             # Initiate orders into class
-                            order_object = classes.Order(order, store_name)
+                            order_object = Order(order, store_name)
                             order_object.shipstation_client = response[1]
                             set_order_shipfrom_location(order_object)
                             order_object.ups_client = ups_client_session

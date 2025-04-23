@@ -1,4 +1,4 @@
-from shipstation.constants import *
+from shipstation_automation.shipstation.constants import *
 from decimal import Decimal
 import datetime
 

@@ -1,8 +1,11 @@
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 import logging
 from io import BytesIO
 from datetime import datetime
+import pytz
+from shipstation_automation.config.config import TIMEZONE
 
 class S3BucketIntegration:
     def __init__(self, bucket_name, region_name='us-east-2'):
@@ -17,7 +20,7 @@ class S3BucketIntegration:
     def upload_log_file(self, env: str, log_content: str) -> bool:
         """Upload log file to S3, appending to existing file if present"""
         
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = datetime.now(pytz.timezone(TIMEZONE)).strftime('%Y-%m-%d')
         s3_key = f'{env}/{today}.log'
         
         try:

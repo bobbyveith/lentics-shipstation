@@ -5,13 +5,16 @@ from main import main
 from shipstation_automation.utils.logger import setup_logging
 from shipstation_automation.utils.output_manager import OutputManager
 
-
 # Initialize AWS Secrets Manager client
 session = boto3.session.Session()
 secrets_client = session.client(
     service_name='secretsmanager',
     region_name='us-east-2'
 )
+
+# Set up logging for the entire module
+setup_logging()
+output = OutputManager('app')
 
 def get_credentials(secret_name):
     try:
@@ -20,14 +23,14 @@ def get_credentials(secret_name):
         return json.loads(secret_value)
     
     except ClientError as e:
+        # Log the error
+        output.print_section_item(f"Error getting credentials: {str(e)}", log_level="error", color="red")
         # For a list of exceptions thrown, see
         # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
         raise e
 
-
-
 def set_program_credentials_to_environment():
-
+    output.print_section_item("Setting up environment credentials", color="blue")
     # Secret_name for each set of api credentials that the program needs
     needed_api_credentials = ["Nuveau_Shipstation", "Lentics_Shipstation", "Lentics_Fedex", "Lentics_UPS", "Nuveau_USPS"]
 
@@ -42,7 +45,8 @@ def set_program_credentials_to_environment():
 
         os.environ[api_key_name] = api_key
         os.environ[api_secret_name] = api_secret
-
+    
+    output.print_section_item("Environment credentials set successfully", color="green")
     return None
 
 # Call the function to set up credentials when the Lambda function file is loaded
@@ -50,10 +54,6 @@ set_program_credentials_to_environment()
 
 def lambda_handler(event, context):
     """Lambda function handler"""
-    # Set up logging for this run
-    setup_logging()
-    output = OutputManager('app')
-    
     try:
         output.print_process_start("Shipstation Automation")
         

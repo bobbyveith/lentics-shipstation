@@ -2,7 +2,8 @@ import boto3
 from botocore.exceptions import ClientError
 import json, os
 from main import main
-from shipstation_automation.utils.logger import setup_logging, get_logger
+from shipstation_automation.utils.logger import setup_logging
+from shipstation_automation.utils.output_manager import OutputManager
 
 
 # Initialize AWS Secrets Manager client
@@ -51,13 +52,19 @@ def lambda_handler(event, context):
     """Lambda function handler"""
     # Set up logging for this run
     setup_logging()
-    logger = get_logger('app')
+    output = OutputManager('app')
     
     try:
-        logger.info("Starting Shipstation Automation Lambda function")
+        output.print_process_start("Shipstation Automation")
+        
+        # Log the start of the process
+        output.print_section_header("📋 Processing Shipstation Orders")
+        output.print_section_item("Starting main processing function", color="green")
+        
         main()
         
         # Send success message to SNS Topic
+        output.print_section_header("📨 Sending SNS Notification")
         sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
         response = sns_client.publish(
@@ -65,10 +72,13 @@ def lambda_handler(event, context):
             Message='[+] Shipstation Automation Ran Successfuly!',
             Subject='SS_Automation Successful'
         )
+        output.print_section_item("SNS notification sent successfully", color="green")
         
-        logger.info("Shipstation Automation completed successfully")
+        # End the process successfully
+        output.print_process_end(success=True)
+        
         # Flush any logs to S3 in production
-        for handler in logger.handlers:
+        for handler in output.logger.handlers:
             if hasattr(handler, 'flush'):
                 handler.flush()
                 
@@ -76,9 +86,10 @@ def lambda_handler(event, context):
 
     except Exception as e:
         # Log the error
-        logger.error(f"Shipstation Automation failed: {str(e)}", exc_info=True)
+        output.print_section_item(f"Error: {str(e)}", log_level="error", color="red")
         
         # Send Error message to SNS Topic
+        output.print_section_header("📨 Sending Error Notification")
         sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
         response = sns_client.publish(
@@ -87,8 +98,11 @@ def lambda_handler(event, context):
             Subject='Error on SS_Automation Lambda'
         )
         
+        # End the process with error
+        output.print_process_end(success=False)
+        
         # Flush any logs to S3 in production
-        for handler in logger.handlers:
+        for handler in output.logger.handlers:
             if hasattr(handler, 'flush'):
                 handler.flush()
                 

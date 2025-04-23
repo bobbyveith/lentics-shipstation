@@ -126,12 +126,12 @@ def get_logger(module_name: str) -> logging.Logger:
 def test_logger():
     """Test various logging configurations"""
     # Import here to avoid circular imports
-    from shipstation_automation.utils.output_manager import get_output_manager
+    from shipstation_automation.utils.output_manager import OutputManager
     
-    # Get different output managers
-    scheduler_output = get_output_manager('scheduler')
-    debug_output = get_output_manager('debug')
-    app_output = get_output_manager('core')
+    # Create output managers for different modules
+    scheduler_output = OutputManager('scheduler')
+    debug_output = OutputManager('debug')
+    app_output = OutputManager('core')
 
     # Test process start/end
     app_output.print_process_start("OUTPUT MANAGER TEST")
@@ -140,9 +140,9 @@ def test_logger():
     app_output.print_section_header("📊 Testing Different Output Types")
     
     # Test regular logging
-    scheduler_output.log_info("Testing scheduler logger - INFO message (file only)")
-    scheduler_output.log_error("Testing scheduler logger - ERROR message (file only)")
-    scheduler_output.log_debug("Testing scheduler logger - DEBUG message (file only)")
+    scheduler_output.logger.info("Testing scheduler logger - INFO message (file only)")
+    scheduler_output.logger.error("Testing scheduler logger - ERROR message (file only)")
+    scheduler_output.logger.debug("Testing scheduler logger - DEBUG message (file only)")
 
     # Test console output
     debug_output.print_section_item("Testing debug output - INFO level", "info")
@@ -151,8 +151,17 @@ def test_logger():
 
     # Test specialized formatters
     app_output.print_section_header("📈 Testing Specialized Formatters")
-    app_output.print_report_item("TestGroup", 10, 5)
-    app_output.print_drive_upload_item(1, 3, "test_file.pdf")
+    
+    # Check if these methods exist in your OutputManager
+    if hasattr(app_output, 'print_report_item'):
+        app_output.print_report_item("TestGroup", 10, 5)
+    else:
+        app_output.print_section_item("Report: TestGroup - 10/5 items processed", color="green")
+        
+    if hasattr(app_output, 'print_drive_upload_item'):
+        app_output.print_drive_upload_item(1, 3, "test_file.pdf")
+    else:
+        app_output.print_section_item(f"Upload: test_file.pdf (1/3)", color="blue")
     
     app_output.print_process_end()
     

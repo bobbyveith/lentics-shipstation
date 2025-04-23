@@ -58,7 +58,7 @@ def set_program_credentials_to_environment():
 # Call the function to set up credentials when the Lambda function file is loaded
 set_program_credentials_to_environment()
 
-def send_sns_notification(topic_arn, message, subject):
+def send_sns_notification(message, subject):
     """Send an SNS notification, but only in production mode"""
     if ENV == 'development':
         output.print_section_item("Development mode: Skipping SNS notification", color="yellow")
@@ -67,6 +67,7 @@ def send_sns_notification(topic_arn, message, subject):
     
     # In production, send the actual notification
     output.print_section_header("📨 Sending SNS Notification")
+    topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
     sns_client = boto3.client('sns')
     response = sns_client.publish(
         TopicArn=topic_arn,
@@ -89,9 +90,7 @@ def lambda_handler(event, context):
         main()
         
         # Send success message to SNS Topic
-        topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
         send_sns_notification(
-            topic_arn,
             '[+] Shipstation Automation Ran Successfuly!',
             'SS_Automation Successful'
         )
@@ -113,7 +112,6 @@ def lambda_handler(event, context):
         # Send Error message to SNS Topic
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
         send_sns_notification(
-            topic_arn,
             f'[X] ERROR: Shipstation Automation did not run because: {e}',
             'Error on SS_Automation Lambda'
         )

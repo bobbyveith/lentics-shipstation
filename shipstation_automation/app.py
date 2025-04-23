@@ -4,6 +4,7 @@ import json, os
 from shipstation_automation.main import main
 from shipstation_automation.utils.logger import setup_logging
 from shipstation_automation.utils.output_manager import OutputManager
+from shipstation_automation.config.config import ENV
 
 # Initialize AWS Secrets Manager client
 session = boto3.session.Session()
@@ -17,6 +18,11 @@ setup_logging()
 output = OutputManager('app')
 
 def get_credentials(secret_name):
+    # Skip credential retrieval in development mode
+    if ENV == 'development':
+        output.print_section_item(f"Development mode: Using dummy credentials for {secret_name}", color="blue")
+        return {"api_key": "dev_key", "api_secret": "dev_secret"}
+    
     try:
         response = secrets_client.get_secret_value(SecretId=secret_name)
         secret_value = response['SecretString']
@@ -52,6 +58,24 @@ def set_program_credentials_to_environment():
 # Call the function to set up credentials when the Lambda function file is loaded
 set_program_credentials_to_environment()
 
+def send_sns_notification(topic_arn, message, subject):
+    """Send an SNS notification, but only in production mode"""
+    if ENV == 'development':
+        output.print_section_item("Development mode: Skipping SNS notification", color="yellow")
+        output.print_section_item(f"Would have sent: {subject} - {message}", color="yellow")
+        return None
+    
+    # In production, send the actual notification
+    output.print_section_header("📨 Sending SNS Notification")
+    sns_client = boto3.client('sns')
+    response = sns_client.publish(
+        TopicArn=topic_arn,
+        Message=message,
+        Subject=subject
+    )
+    output.print_section_item("SNS notification sent successfully", color="green")
+    return response
+
 def lambda_handler(event, context):
     """Lambda function handler"""
     try:
@@ -65,15 +89,12 @@ def lambda_handler(event, context):
         main()
         
         # Send success message to SNS Topic
-        output.print_section_header("📨 Sending SNS Notification")
-        sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
-        response = sns_client.publish(
-            TopicArn=topic_arn,
-            Message='[+] Shipstation Automation Ran Successfuly!',
-            Subject='SS_Automation Successful'
+        send_sns_notification(
+            topic_arn,
+            '[+] Shipstation Automation Ran Successfuly!',
+            'SS_Automation Successful'
         )
-        output.print_section_item("SNS notification sent successfully", color="green")
         
         # End the process successfully
         output.print_process_end(success=True)
@@ -90,13 +111,11 @@ def lambda_handler(event, context):
         output.print_section_item(f"Error: {str(e)}", log_level="error", color="red")
         
         # Send Error message to SNS Topic
-        output.print_section_header("📨 Sending Error Notification")
-        sns_client = boto3.client('sns')
         topic_arn = 'arn:aws:sns:us-east-2:768214456858:Shipstation-Automation-Runtime'
-        response = sns_client.publish(
-            TopicArn=topic_arn,
-            Message=f'[X] ERROR: Shipstation Automation did not run because: {e}',
-            Subject='Error on SS_Automation Lambda'
+        send_sns_notification(
+            topic_arn,
+            f'[X] ERROR: Shipstation Automation did not run because: {e}',
+            'Error on SS_Automation Lambda'
         )
         
         # End the process with error

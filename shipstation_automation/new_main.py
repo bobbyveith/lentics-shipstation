@@ -26,20 +26,17 @@ def check_aws_connection():
         raise SystemExit("[X] Program Cancelled - AWS credentials not found")
     
 
-def create_clients(account_name="lentics"):
+def create_clients(account_name):
     '''
     This function is used to set up the program and intiated the data into python object
     '''
     # Set up the progam and get the list of orders and csv for customer logging
-    output.print_banner()
-
     print("======= Starting Initial Setup =======")
 
     # Connect to all needed API Clients
     print("Connecting to the ShipStation API...")
     ss_client = ShipStation(account_name)
     print("[+] Connected to the ShipStation API!\n\n")
-    raise SystemExit("End Test")
     fedex_client = create_fedex_session()
     print("[+] Connected to the FedEx API!\n\n")
     ups_client = UPSAPIClient()
@@ -80,7 +77,7 @@ def fetch_orders_with_retry(ss_client, params, max_retries, delay=2):
     return response
 
 
-def fetch_all_awaiting_shipment_order_ids():
+def fetch_all_awaiting_shipment_order_ids(ss_client):
     """
     Fetches all order IDs with 'awaiting_shipment' status from ShipStation.
     
@@ -89,9 +86,6 @@ def fetch_all_awaiting_shipment_order_ids():
     """
     try:
         output.print_section_header("🔍 Fetching all awaiting shipment order IDs")
-        
-        # Create ShipStation client
-        ss_client = ShipStation("sporticulture")
         
         # Initialize variables
         page = 1
@@ -156,7 +150,7 @@ def fetch_all_awaiting_shipment_order_ids():
         return set()
 
 
-def main(account_name="LENTICS_SHIPSTATION", batch_size=5):
+def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
 
     """
     Main entry point for the ShipStation processing command.
@@ -174,7 +168,7 @@ def main(account_name="LENTICS_SHIPSTATION", batch_size=5):
         #rule_engine = BaseRuleEngine.get_instance(account_name=account_name, account_id=1)
 
         # Fetch all order IDs first
-        all_order_ids = list(fetch_all_awaiting_shipment_order_ids())
+        all_order_ids = list(fetch_all_awaiting_shipment_order_ids(ss_client))
 
         output.print_section_item(f"[+] Found {len(all_order_ids)} orders to process", color="green")
         for order_id in all_order_ids:

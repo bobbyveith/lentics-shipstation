@@ -1,9 +1,9 @@
 from .classes import ShipStation
 from dotenv import load_dotenv
 import os
+from shipstation_automation.utils.output_manager import OutputManager
 
-
-
+output = OutputManager(__name__)
 
 def get_secret(account_name):
     load_dotenv()
@@ -13,10 +13,11 @@ def get_secret(account_name):
     
     # Safeguard for the account name
     account_name = account_name.upper()
+    output.print_section_item(f"[+] Account name: {account_name}", color="green")
 
     api_key = os.getenv("API_KEY_" + account_name)
     api_secret = os.getenv("API_SECRET_" + account_name)
-    
+
     if not api_key or not api_secret:
         raise ValueError(f"API credentials not found for account: {account_name}")
     

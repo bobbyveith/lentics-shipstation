@@ -3,6 +3,7 @@ import json, os, time, pyfiglet, requests
 from shipstation_automation.shipstation.api import *
 from shipstation_automation.classes import Order
 from shipstation_automation.ups_api import create_ups_session
+from shipstation_automation.integrations.ups_api import UPSAPIClient
 from shipstation_automation.fedex_api import create_fedex_session
 from shipstation_automation.customer_log import create_s3_client_session
 
@@ -681,7 +682,7 @@ def decode_response(dict_of_order_responses):
         Return:
             None
     """
-    ups_client_session = create_ups_session()
+    ups_client_session = UPSAPIClient() #create_ups_session()
     fedex_client_session = create_fedex_session()
     list_of_objects = []
     for store_name, response in dict_of_order_responses.items():

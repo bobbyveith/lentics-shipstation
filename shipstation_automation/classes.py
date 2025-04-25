@@ -4,9 +4,6 @@
 from datetime import datetime, timedelta
 from shipstation_automation.utils.utils import get_ship_date
 
-__author__ = ["Rafael Malcervelli", "Bobby Veith"]
-__company__ = "Lentics, Inc."
-
 class Order:
     """
         This class represents an order from the ShipStation API. It contains the order details such as shipment info, customer info, order id, order number, order status, order total, contains alcohol, order source, order store id, order warehouse id, carrier code, and create date.

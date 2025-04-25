@@ -6,7 +6,7 @@ from shipstation_automation.utils.utils import list_account_tags
 import shipstation_automation.customer_log as cl
 
 
-__author__ = ["Rafael Malcervelli", "Bobby Veith"]
+__author__ = ["Bobby Veith"]
 __company__ = "Lentics, Inc."
 
 def initial_setup():

@@ -1,11 +1,11 @@
-import requests
-from urllib.parse import quote_plus
-import base64
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import time
 import os
+import uuid
+import requests
+import base64
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote_plus
 from typing import Dict, Optional, Any
+from dotenv import load_dotenv
 
 from shipstation_automation.schemas.ups_schema import (
     UPSAuthCredentials, 
@@ -15,127 +15,79 @@ from shipstation_automation.schemas.ups_schema import (
     UPSServiceOption
 )
 
-class UPSAuthToken:
-    """
-    Class for handling UPS API authentication.
+class TokenResponse:
+    """Class to represent an OAuth token response."""
     
-    This class manages the OAuth authentication flow with UPS API,
-    including token acquisition and refresh.
-    """
-    
-    def __init__(self, credentials: Optional[UPSAuthCredentials] = None):
-        """
-        Initialize the UPS authentication token manager.
-        
-        Args:
-            credentials: UPS API credentials (client_id and client_secret)
-                        If None, credentials will be loaded from environment variables
-        """
-        load_dotenv()
-        self.session = requests.Session()
-        
-        if credentials:
-            self.credentials = credentials
-        else:
-            # Load credentials from environment variables
-            self.credentials = UPSAuthCredentials(
-                client_id=os.getenv('API_KEY_LENTICS_UPS', ''),
-                client_secret=os.getenv('API_SECRET_LENTICS_UPS', '')
-            )
-        
-        self.auth_response = None
-        self.token_expiry_time = None
+    def __init__(self, access_token: str, token_type: str, token_expiry: datetime):
+        self.access_token = access_token
+        self.token_type = token_type
+        self.token_expiry = token_expiry
 
-    def get_token(self) -> str:
+class UPSOAuth:
+    """
+    Class for handling UPS API authentication with OAuth.
+    """
+    
+    def __init__(self):
+        load_dotenv()
+        self.client_id = os.getenv('API_KEY_LENTICS_UPS')
+        self.client_secret = os.getenv('API_SECRET_LENTICS_UPS')
+        self.token_endpoint = 'https://onlinetools.ups.com/security/v1/oauth/token'
+        self.access_token: Optional[str] = None
+        self.token_type: Optional[str] = None
+        self.token_expiry: Optional[datetime] = None
+
+    def get_token(self) -> TokenResponse:
         """
         Get a valid OAuth token, refreshing if necessary.
         
         Returns:
-            str: The access token for UPS API authentication
+            TokenResponse: Object containing the access token, token type, and expiry
         """
-        # Check if token exists and is still valid
-        if not self.auth_response or not self.token_expiry_time or datetime.now() >= self.token_expiry_time:
-            self._refresh_token()
-            
-        return self.auth_response.access_token
-            
-    def _refresh_token(self) -> None:
-        """
-        Refresh the OAuth token by requesting a new one from UPS API.
-        
-        Raises:
-            Exception: If token request fails after retries
-        """
-        # Prepare credentials for Basic Auth
-        auth_value = f"{quote_plus(self.credentials.client_id)}:{quote_plus(self.credentials.client_secret)}"
+        if self.access_token and self.token_expiry:
+            if datetime.now(timezone.utc) < self.token_expiry:
+                return TokenResponse(
+                    access_token=self.access_token,
+                    token_type=self.token_type,
+                    token_expiry=self.token_expiry,
+                )
+
+        auth_value = f"{quote_plus(self.client_id)}:{quote_plus(self.client_secret)}"
         encoded_credentials = base64.b64encode(auth_value.encode('utf-8')).decode('utf-8')
-        
+
         headers = {
             'Authorization': f'Basic {encoded_credentials}',
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': '*/*',
-            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Origin': 'https://developer.ups.com',
-            'User-Agent': 'Python requests library'
+            'Accept': 'application/json',
         }
-        
-        data = {
-            'grant_type': 'client_credentials'
-        }
-        
-        max_retries = 3
-        retry_count = 0
-        
-        while retry_count < max_retries:
-            response = self.session.post(
-                'https://wwwcie.ups.com/security/v1/oauth/token', 
-                headers=headers, 
-                data=data
-            )
-            
-            if response.status_code == 200:
-                print("[+] UPS OAuth token request successful!")
-                token_info = response.json()
-                self.auth_response = UPSAuthResponse(
-                    access_token=token_info.get('access_token'),
-                    token_type=token_info.get('token_type', 'Bearer'),
-                    expires_in=token_info.get('expires_in', 3600)
-                )
-                # Set token expiry time (subtract 60 seconds as buffer)
-                self.token_expiry_time = datetime.now() + timedelta(seconds=self.auth_response.expires_in - 60)
-                return
-            else:
-                print(f"[X] Token request failed: {response.text}")
-                retry_count += 1
-                print(f"Retrying... ({retry_count}/{max_retries})")
-                time.sleep(1)
-        
-        print("[X] Failed to get UPS OAuth token after retries.")
-        raise Exception("Failed to acquire UPS OAuth token")
+
+        data = {'grant_type': 'client_credentials'}
+
+        response = requests.post(self.token_endpoint, headers=headers, data=data, timeout=10)
+        response.raise_for_status()
+        token_info = response.json()
+
+        self.access_token = token_info['access_token']
+        self.token_type = 'Bearer'
+        expires_in = int(token_info.get('expires_in', 3600))
+        self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
+
+        return TokenResponse(
+            access_token=self.access_token,
+            token_type=self.token_type,
+            token_expiry=self.token_expiry,
+        )
 
 
 class UPSAPIClient:
-    """
-    UPS API client for interacting with UPS shipping services.
+    """UPS API client to interact with UPS shipping services."""
     
-    This class provides methods to make authenticated requests to UPS API
-    endpoints, focusing on shipping rate and transit time information.
-    """
-    
-    BASE_URL = "https://wwwcie.ups.com"
-    
-    def __init__(self, auth_token: Optional[UPSAuthToken] = None):
-        """
-        Initialize the UPS API client.
-        
-        Args:
-            auth_token: UPS authentication token manager
-                        If None, a new UPSAuthToken instance will be created
-        """
-        self.auth = auth_token if auth_token else UPSAuthToken()
+    def __init__(self):
+        """Initialize the UPS API client with OAuth authentication."""
+        self.base_url = 'https://onlinetools.ups.com'
+        self.oauth = UPSOAuth()
         self.session = requests.Session()
-        
+
     def get_headers(self) -> Dict[str, str]:
         """
         Get headers for UPS API requests with authentication.
@@ -143,65 +95,52 @@ class UPSAPIClient:
         Returns:
             Dict[str, str]: Headers for UPS API requests
         """
+        token = self.oauth.get_token()
         return {
-            'Accept': 'application/json',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-            'Authorization': f'Bearer {self.auth.get_token()}',
-            'Connection': 'keep-alive',
+            'Authorization': f"{token.token_type} {token.access_token}",
             'Content-Type': 'application/json',
-            'Host': 'wwwcie.ups.com',
-            'Origin': 'https://developer.ups.com',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
+            'Accept': 'application/json',
             'transactionSrc': 'testing',
-            'transId': '12345612345612345612345612345612',
-            'User-Agent': 'Python requests library',
+            'transId': str(uuid.uuid4()),
         }
-        
+
     def make_request(
-        self, 
-        endpoint: str, 
-        method: str, 
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
         data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    ) -> Optional[Dict[str, Any]]:
         """
         Make a request to UPS API.
         
         Args:
-            endpoint: API endpoint path (without base URL)
             method: HTTP method ('GET', 'POST', etc.)
-            data: Request payload for POST/PUT requests
+            endpoint: API endpoint path (without base URL)
             params: Query parameters for GET requests
+            data: Request payload for POST/PUT requests
             
         Returns:
-            Dict[str, Any]: JSON response from the API
+            Optional[Dict[str, Any]]: JSON response from the API or None
             
         Raises:
-            Exception: If the API request fails
+            requests.exceptions.RequestException: If the API request fails
         """
-        url = f"{self.BASE_URL}{endpoint}"
+        url = f"{self.base_url}{endpoint}"
         headers = self.get_headers()
-        
+
         try:
-            if method.upper() == 'GET':
-                response = self.session.get(url, headers=headers, params=params)
-            elif method.upper() == 'POST':
-                response = self.session.post(url, headers=headers, json=data)
-            else:
-                raise ValueError(f"Unsupported HTTP method: {method}")
-                
+            response = self.session.request(method, url, headers=headers, params=params, json=data)
             response.raise_for_status()
-            return response.json()
-            
+            if response.content:
+                return response.json()
+            return None
         except requests.exceptions.RequestException as e:
             print(f"[X] API request failed: {e}")
-            if hasattr(e.response, 'text'):
+            if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
             raise
-            
+
     def get_transit_times(self, request: TransitTimeRequest) -> TransitTimeResponse:
         """
         Get transit times for a shipment.
@@ -216,12 +155,29 @@ class UPSAPIClient:
         payload = request.to_payload()
         
         try:
-            response_data = self.make_request(endpoint, method='POST', data=payload)
+            response_data = self.make_request('POST', endpoint, data=payload)
             return TransitTimeResponse.from_api_response(response_data)
         except Exception as e:
-            print(f"[X] Failed to get delivery times: {e}")
+            print(f"[X] Failed to get transit times: {e}")
             raise
-            
+
+
+def create_ups_session() -> UPSAPIClient:
+    """
+    Create and return a UPS API client session that can be shared across orders
+    
+    Returns:
+        UPSAPIClient: Initialized UPS API client with valid authentication
+    """
+    # Initialize the UPS API client
+    ups_client = UPSAPIClient()
+    
+    # Force authentication to happen now (this will make a call to get a token)
+    ups_client.oauth.get_token()
+    
+    # Return the initialized client
+    return ups_client
+
 
 if __name__ == '__main__':
     try:

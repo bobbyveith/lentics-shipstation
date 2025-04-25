@@ -21,10 +21,9 @@ def check_aws_connection():
     try:
         # This will check both EC2 role and local credentials
         boto3.client('sts').get_caller_identity()
-        print("[+] AWS credentials verified")
     except (NoCredentialsError, ClientError) as e:
+        output.print_section_item("[X] Program Cancelled - AWS credentials not found", color="red")
         raise SystemExit("[X] Program Cancelled - AWS credentials not found")
-    
 
 def create_clients(account_name):
     '''
@@ -160,9 +159,7 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
     Fetches all order IDs first, then processes each order individually.
     """
     try:
-        output.print_banner()
-        output.print_section_header("🚀 Running Shipstation...")
-        
+        output.print_section_divider()
 
         # Create all the needed API Clients
         ss_client, fedex_client, ups_client = create_clients(account_name)

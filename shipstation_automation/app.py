@@ -6,16 +6,19 @@ from shipstation_automation.utils.logger import setup_logging
 from shipstation_automation.utils.output_manager import OutputManager
 from shipstation_automation.config.config import ENV
 
+
+# Set up logging for the entire module
+setup_logging()
+output = OutputManager('app')
+output.print_process_start("🚀 Starting Lambda Function")
+
+
 # Initialize AWS Secrets Manager client
 session = boto3.session.Session()
 secrets_client = session.client(
     service_name='secretsmanager',
     region_name='us-east-2'
 )
-
-# Set up logging for the entire module
-setup_logging()
-output = OutputManager('app')
 
 def get_credentials(secret_name):
     """
@@ -89,12 +92,7 @@ def send_sns_notification(message, subject):
 def lambda_handler(event, context):
     """Lambda function handler"""
     try:
-        output.print_process_start("Shipstation Automation")
-        
-        # Log the start of the process
-        output.print_section_header("📋 Processing Shipstation Orders")
-        output.print_section_item("Starting main processing function", color="green")
-        
+        output.print_banner()
         main()
         
         # Send success message to SNS Topic

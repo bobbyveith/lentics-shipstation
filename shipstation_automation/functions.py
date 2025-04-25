@@ -614,13 +614,6 @@ def decode_response(dict_of_order_responses):
         Return:
             None
     """
-
-    # Create a single UPS client session for all orders
-    ups_client = UPSAPIClient()
-    
-    # Create a UPS service that uses this client
-    ups_service = UPSService(ups_client)
-    fedex_client_session = create_fedex_session()
     list_of_objects = []
     for store_name, response in dict_of_order_responses.items():
         for res in response[0]:
@@ -652,9 +645,6 @@ def decode_response(dict_of_order_responses):
                             order_object = Order(order, store_name)
                             order_object.shipstation_client = response[1]
                             set_order_shipfrom_location(order_object)
-                            order_object.ups_service = ups_service
-                            order_object.fedex_client = fedex_client_session
-
 
                             # Skip orders shipping to Puerto Rico
                             if order_object.Customer.state.upper() == "PR":

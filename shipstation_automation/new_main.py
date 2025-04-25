@@ -170,12 +170,6 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
         # Fetch all order IDs first
         all_orders = fetch_all_awaiting_shipment_order_ids(ss_client)
 
-        output.print_section_item(f"[+] Found {len(all_orders)} orders to process", color="green")
-        for order in all_orders:
-            output.print_section_item(f"  - Order ID: {order['orderId']}, Order Number: {order['orderNumber']}", color="green")
-
-        raise SystemExit("End Test")
-
         if not all_orders:
             output.print_section_item("[X] No orders to process", color="red")
             return
@@ -190,7 +184,7 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
         # Process in batches of specified size
         for batch_start in range(0, total_orders, batch_size):
             batch_end = min(batch_start + batch_size, total_orders)
-            batch_ids = all_orders[batch_start:batch_end]
+            batch_ids = [order["orderId"] for order in all_orders[batch_start:batch_end]]
             
             output.print_section_item(f"\n[+] Processing batch {batch_start//batch_size + 1}/{(total_orders+batch_size-1)//batch_size} (orders {batch_start+1}-{batch_end} of {total_orders})", color="green")
             
@@ -201,6 +195,9 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
                 try:
                     # Fetch order details
                     response = ss_client.get_order(order_id)
+                    response_json = response.json()
+                    output.print_section_item(response_json, color="green")
+                    raise SystemExit("End Test")
                     
                     if response.status_code != 200:
                         output.print_section_item(f"[X] Error fetching order {order_id}: {response.status_code}", color="red")

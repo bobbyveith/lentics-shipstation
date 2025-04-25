@@ -18,11 +18,20 @@ setup_logging()
 output = OutputManager('app')
 
 def get_credentials(secret_name):
-    # Skip credential retrieval in development mode
-    if ENV == 'development':
-        output.print_section_item(f"Development mode: Using dummy credentials for {secret_name}", color="blue")
-        return {"api_key": "dev_key", "api_secret": "dev_secret"}
+    """
+    Retrieve credentials from AWS Secrets Manager.
     
+    Fetches and parses a secret from AWS Secrets Manager using the provided secret name.
+    
+    Args:
+        secret_name (str): The name of the secret to retrieve from AWS Secrets Manager
+        
+    Returns:
+        dict: The parsed JSON secret value as a dictionary
+        
+    Raises:
+        ClientError: If there's an error retrieving the secret from AWS Secrets Manager
+    """
     try:
         response = secrets_client.get_secret_value(SecretId=secret_name)
         secret_value = response['SecretString']

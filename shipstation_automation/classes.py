@@ -20,7 +20,7 @@ class Order:
         self.order_dict         = order_dict
         self.order_id           = order_dict["orderId"]
         self.shipstation_client = ""
-        self.ups_client         = ""
+        self.ups_service        = ""
         self.fedex_client       = ""
         self.store_name         = store_name
         self.order_key          = order_dict["orderKey"]

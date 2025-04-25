@@ -70,7 +70,7 @@ class UPSService:
             residential_indicator=residential_indicator
         )
 
-    def get_best_rate(self, order: Any) -> Optional[ShippingRate]:
+    def get_ups_best_rate(self, order: Any) -> Optional[ShippingRate]:
         """
         Get the best shipping rate for an order.
         
@@ -107,7 +107,7 @@ class UPSService:
             if best_option:
                 # Remove delivery date before returning
                 best_option.delivery_date = None
-                return best_option
+                return best_option.to_dict()
                 
             return None
             
@@ -273,32 +273,6 @@ class UPSService:
             
         return best_option
 
-
-# Adapter function to maintain compatibility with existing code
-def get_ups_best_rate(order):
-    """
-    Get the best UPS shipping rate for an order (compatibility function).
-    
-    Args:
-        order: Order object
-        
-    Returns:
-        dict: Best UPS shipping rate or None
-    """
-    # Create UPS client and service
-    api_client = UPSAPIClient()
-    ups_service = UPSService(api_client)
-    
-    # Attach UPS client to order to maintain compatibility
-    order.ups_client = api_client.session
-    order.ups_client.headers.update(api_client.get_headers())
-    
-    # Get best rate
-    best_rate = ups_service.get_best_rate(order)
-    
-    if best_rate:
-        return best_rate.to_dict()
-    return None
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 import shipstation_automation.functions as functions
-import shipstation_automation.ups_api as ups_api
+#import shipstation_automation.ups_api as ups_api
 from shipstation_automation.usps_api import get_usps_best_rate
 from shipstation_automation.fedex_api import get_fedex_best_rate
 from shipstation_automation.utils.utils import list_account_tags
@@ -81,7 +81,7 @@ def set_winning_rate(order):
                 return True
 
             # Get winning UPS rate
-            ups_best = ups_api.get_ups_best_rate(order)
+            ups_best = order.ups_service.get_ups_best_rate(order)
             if ups_best is False:
                 failure = (order, "No UPS Rate")
                 retry_list.append(failure)

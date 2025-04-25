@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import json, os, time, pyfiglet, requests
+import json, os, time, requests
 from shipstation_automation.integrations.shipstation.v1.api import *
 from shipstation_automation.classes import Order
 from shipstation_automation.integrations.ups.ups_api import UPSAPIClient
@@ -10,85 +10,8 @@ from shipstation_automation.utils.output_manager import OutputManager
 
 output = OutputManager(__name__)
 
-__author__ = ["Rafael Malcervelli", "Bobby Veith"]
+__author__ = ["Bobby Veith"]
 __company__ = "Lentics, Inc."
-
-
-def print_banner():
-    """
-        Print the banner for the ShipStation Automation script.
-
-        Args:
-            None
-        Return:
-            None
-    """
-    banner = "ShipStation Automation"
-    ascii_banner = pyfiglet.figlet_format(banner)
-    print(ascii_banner)
-
-
-def print_green(text):
-    """
-    Prints the given text in green color.
-
-    Parameters:
-    - text (str): The text to be printed.
-
-    Returns:
-    - None
-    """
-    # ANSI escape code for green color
-    green_color_code = '\033[92m'
-    
-    # ANSI escape code to reset color back to default
-    reset_color_code = '\033[0m'
-    
-    # Print the text in green color
-    print(f"{green_color_code}{text}{reset_color_code}")
-
-def print_red(text):
-    """
-    Prints the given text in red color.
-
-    Parameters:
-    - text (str): The text to be printed.
-
-    Returns:
-    - None
-    """
-    # ANSI escape code for red color
-    red_color_code = '\033[91m'
-    
-    # ANSI escape code to reset color back to default
-    reset_color_code = '\033[0m'
-    
-    # Print the text in red color
-    print(f"{red_color_code}{text}{reset_color_code}")
-
-
-
-
-def print_yellow(text):
-    """
-    Prints the given text in yellow color.
-
-    Parameters:
-    - text (str): The text to be printed.
-
-    Returns:
-    - None
-    """
-    # ANSI escape code for yellow color
-    yellow_color_code = '\033[93m'
-    
-    # ANSI escape code to reset color back to default
-    reset_color_code = '\033[0m'
-    
-    # Print the text in yellow color
-    print(f"{yellow_color_code}{text}{reset_color_code}")
-
-
 
 
 def get_store_ids(name_of_store):

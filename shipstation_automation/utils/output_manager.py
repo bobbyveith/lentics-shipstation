@@ -1,5 +1,6 @@
 from typing import Optional
 import logging
+import pyfiglet
 
 # Import logger functions without creating circular imports
 from shipstation_automation.utils.logger import get_logger
@@ -22,6 +23,19 @@ class OutputManager:
         # Get logger from the logger.py module
         self.logger = get_logger(module_name)
         self.logger.setLevel(log_level)
+    
+    def print_banner(self):
+        """
+            Print the banner for the ShipStation Automation script.
+
+            Args:
+                None
+            Return:
+                None
+        """
+        banner = "ShipStation Automation"
+        ascii_banner = pyfiglet.figlet_format(banner)
+        self.logger.info(ascii_banner)
     
     # Process start/end methods
     def print_process_start(self, process_name: Optional[str] = None):

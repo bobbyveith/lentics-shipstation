@@ -12,8 +12,7 @@ from shipstation_automation.schemas.ups_schema import (
     UPSAuthResponse,
     TransitTimeRequest,
     TransitTimeResponse,
-    UPSServiceOption,
-    TokenResponse
+    UPSServiceOption
 )
 
 
@@ -24,29 +23,32 @@ class UPSOAuth:
     
     def __init__(self):
         load_dotenv()
-        self.client_id = os.getenv('API_KEY_LENTICS_UPS')
-        self.client_secret = os.getenv('API_SECRET_LENTICS_UPS')
+        # Use UPSAuthCredentials to store credentials
+        self.credentials = UPSAuthCredentials(
+            client_id=os.getenv('API_KEY_LENTICS_UPS'),
+            client_secret=os.getenv('API_SECRET_LENTICS_UPS')
+        )
         self.token_endpoint = 'https://onlinetools.ups.com/security/v1/oauth/token'
         self.access_token: Optional[str] = None
         self.token_type: Optional[str] = None
         self.token_expiry: Optional[datetime] = None
 
-    def get_token(self) -> TokenResponse:
+    def get_token(self) -> UPSAuthResponse:
         """
         Get a valid OAuth token, refreshing if necessary.
         
         Returns:
-            TokenResponse: Object containing the access token, token type, and expiry
+            UPSAuthResponse: Object containing the access token, token type, and expiry
         """
         if self.access_token and self.token_expiry:
             if datetime.now(timezone.utc) < self.token_expiry:
-                return TokenResponse(
+                return UPSAuthResponse(
                     access_token=self.access_token,
                     token_type=self.token_type,
-                    token_expiry=self.token_expiry,
+                    expires_in=self.token_expiry
                 )
 
-        auth_value = f"{quote_plus(self.client_id)}:{quote_plus(self.client_secret)}"
+        auth_value = f"{quote_plus(self.credentials.client_id)}:{quote_plus(self.credentials.client_secret)}"
         encoded_credentials = base64.b64encode(auth_value.encode('utf-8')).decode('utf-8')
 
         headers = {
@@ -66,10 +68,10 @@ class UPSOAuth:
         expires_in = int(token_info.get('expires_in', 3600))
         self.token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
 
-        return TokenResponse(
+        return UPSAuthResponse(
             access_token=self.access_token,
             token_type=self.token_type,
-            token_expiry=self.token_expiry,
+            expires_in=self.token_expiry
         )
 
 
@@ -158,7 +160,8 @@ class UPSAPIClient:
 
 def create_ups_session() -> UPSAPIClient:
     """
-    Create and return a UPS API client session that can be shared across orders
+    Create and return a UPS API client session that can be shared across orders.
+    This ensures all orders use the same authenticated session for UPS API calls.
     
     Returns:
         UPSAPIClient: Initialized UPS API client with valid authentication
@@ -167,9 +170,10 @@ def create_ups_session() -> UPSAPIClient:
     ups_client = UPSAPIClient()
     
     # Force authentication to happen now (this will make a call to get a token)
+    # Getting the token immediately ensures we don't have multiple token requests
+    # when processing multiple orders
     ups_client.oauth.get_token()
     
-    # Return the initialized client
     return ups_client
 
 

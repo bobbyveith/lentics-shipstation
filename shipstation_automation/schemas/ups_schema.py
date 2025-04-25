@@ -14,8 +14,8 @@ class UPSAuthResponse:
     """UPS OAuth response data model"""
     access_token: str
     token_type: str = "Bearer"
-    expires_in: int = 0
-    
+    expires_in: datetime
+
 @dataclass
 class ShipmentOrigin:
     """Shipment origin location data"""
@@ -144,10 +144,3 @@ class ShippingRate:
         if self.delivery_date:
             result['deliveryDate'] = self.delivery_date
         return result
-
-@dataclass
-class TokenResponse:
-    """Class to represent an OAuth token response."""
-    access_token: str
-    token_type: str
-    token_expiry: datetime

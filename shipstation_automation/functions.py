@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 import json, os, time, pyfiglet, requests
 from shipstation_automation.shipstation.api import *
 from shipstation_automation.classes import Order
-from shipstation_automation.ups_api import create_ups_session
 from shipstation_automation.integrations.ups_api import UPSAPIClient
 from shipstation_automation.fedex_api import create_fedex_session
 from shipstation_automation.customer_log import create_s3_client_session
@@ -63,6 +62,8 @@ def print_red(text):
     
     # Print the text in red color
     print(f"{red_color_code}{text}{reset_color_code}")
+
+
 
 
 def print_yellow(text):

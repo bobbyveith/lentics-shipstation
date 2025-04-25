@@ -144,3 +144,10 @@ class ShippingRate:
         if self.delivery_date:
             result['deliveryDate'] = self.delivery_date
         return result
+
+@dataclass
+class TokenResponse:
+    """Class to represent an OAuth token response."""
+    access_token: str
+    token_type: str
+    token_expiry: datetime

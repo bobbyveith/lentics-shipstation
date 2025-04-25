@@ -12,16 +12,10 @@ from shipstation_automation.schemas.ups_schema import (
     UPSAuthResponse,
     TransitTimeRequest,
     TransitTimeResponse,
-    UPSServiceOption
+    UPSServiceOption,
+    TokenResponse
 )
 
-class TokenResponse:
-    """Class to represent an OAuth token response."""
-    
-    def __init__(self, access_token: str, token_type: str, token_expiry: datetime):
-        self.access_token = access_token
-        self.token_type = token_type
-        self.token_expiry = token_expiry
 
 class UPSOAuth:
     """

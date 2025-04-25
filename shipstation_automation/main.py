@@ -15,9 +15,7 @@ output = OutputManager(__name__)
 
 
 def initial_setup():
-    # Print the banner
-    functions.print_banner()
-
+    
     output.print_section_header("======= Starting Initial Setup =======")
     # Connect to the ShipStation API
     dict_of_ss_clients = functions.connect_to_api()

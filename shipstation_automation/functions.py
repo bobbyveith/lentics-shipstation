@@ -255,7 +255,7 @@ def tag_order(order_object, tag_reason: str):
         return True
 
     except Exception as e:
-        print_yellow("[!] Warning: Could not tag order! ")
+        output.print_section_item(f"[X] Warning could not tag order: {order_object.order_id}", color="yellow")
         print(response.status_code)
         print(response.text)
         print(e)

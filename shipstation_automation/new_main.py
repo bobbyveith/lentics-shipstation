@@ -3,6 +3,7 @@ import shipstation_automation.functions as functions
 from shipstation_automation.integrations.shipstation.v1.api import connect_to_api as ShipStation
 from shipstation_automation.fedex_api import create_fedex_session
 from shipstation_automation.integrations.ups.ups_api import UPSAPIClient
+from shipstation_automation.automations.initialization import initialize_orders
 
 
 import traceback
@@ -195,9 +196,6 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
                 try:
                     # Fetch order details
                     response = ss_client.get_order(order_id)
-                    response_json = response.json()
-                    output.print_section_item(response_json, color="green")
-                    raise SystemExit("End Test")
                     
                     if response.status_code != 200:
                         output.print_section_item(f"[X] Error fetching order {order_id}: {response.status_code}", color="red")
@@ -210,14 +208,8 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
                     output.print_section_item(f"[X] Error fetching order {order_id}: {str(e)}", color="red")
                     continue
             
-            # # Process the batch of orders
-            # orders = serialization.serialize_orders(
-            #     initialization.initialize_orders(
-            #         batch_orders,
-            #         ss_client, fedex_client, ups_client, usps_client
-            #     ),
-            #     rule_engine
-            # )
+            # Process the batch of orders
+            orders = initialize_orders(batch_orders,ss_client, fedex_client, ups_client)
 
             # # Filter for valid trading partners
             # valid_orders = [order for order in orders if order.Metainfo.trading_partner in valid_trading_partners]

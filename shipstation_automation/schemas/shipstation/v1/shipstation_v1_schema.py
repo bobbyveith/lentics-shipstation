@@ -99,10 +99,30 @@ class AdvancedOptionsModel(BaseModel):
     billToMyOtherAccount: Optional[int] = None
 
 
+class ShipmentModel(BaseModel):
+    pass
+
+
+class CustomerModel(BaseModel):
+    id: int
+    username: str
+    name: str
+    email: str
+    notes: str
+    billToDict: AddressModel
+    shipToDict: AddressModel
+    internalNotes: str
+    is_residential: bool
+
+    
+
 class ShipstationOrderModel(BaseModel):
     """Main Shipstation order model that represents the full API response"""
+    Customer: CustomerModel
+    Shipment: ShipmentModel
     orderId: int
     orderNumber: str
+    storeName: str
     orderKey: str
     orderDate: str
     createDate: str
@@ -110,9 +130,6 @@ class ShipstationOrderModel(BaseModel):
     paymentDate: str
     shipByDate: str
     orderStatus: str
-    customerId: int
-    customerUsername: str
-    customerEmail: str
     billTo: AddressModel
     shipTo: AddressModel
     items: List[ItemModel]

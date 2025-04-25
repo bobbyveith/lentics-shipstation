@@ -4,7 +4,7 @@ import logging.config
 import yaml
 import io
 from shipstation_automation.config.config import ENV, S3_LOG_BUCKET_NAME
-from shipstation_automation.integrations.aws_s3 import S3BucketIntegration
+from shipstation_automation.integrations.aws.aws_s3 import S3BucketIntegration
 
 class ConsoleLogger(logging.Logger):
     def console_info(self, msg, *args, **kwargs):

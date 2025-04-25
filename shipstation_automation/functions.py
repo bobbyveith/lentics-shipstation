@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 import json, os, time, pyfiglet, requests
-from shipstation_automation.shipstation.api import *
+from shipstation_automation.integrations.shipstation.v1.api import *
 from shipstation_automation.classes import Order
-from shipstation_automation.integrations.ups_api import UPSAPIClient
+from shipstation_automation.integrations.ups.ups_api import UPSAPIClient
 from shipstation_automation.services.ups_service import UPSService
 from shipstation_automation.fedex_api import create_fedex_session
 from shipstation_automation.customer_log import create_s3_client_session
+from shipstation_automation.utils.output_manager import OutputManager
 
+output = OutputManager(__name__)
 
 __author__ = ["Rafael Malcervelli", "Bobby Veith"]
 __company__ = "Lentics, Inc."
@@ -142,7 +144,12 @@ def refresh_stores(name_of_store, shipstation):
 
     for store_name, store_id in dict_of_store_ids.items():
         try:
+            output.print_section_item(f"[+] Refreshing store: {store_name}", color="green")
+            output.print_section_item(f"[+] Shipstation: {shipstation}", color="green")
+
             response = shipstation.post(endpoint=f"/stores/refreshstore?storeId={store_id}")
+            response_json = response.json()
+            output.print_section_item(f"[+] Response: {response_json}", color="green")
             response.raise_for_status()
 
             response_json = response.json()

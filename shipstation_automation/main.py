@@ -32,6 +32,13 @@ def initial_setup():
     dict_of_response_orders = functions.fetch_orders_with_retry(dict_of_ss_clients)
     output.print_section_item("[+] Fetched orders from the ShipStation API!", color="green")
 
+    output.print_section_item(f"[+] Dict of response orders: {dict_of_response_orders}", color="green")
+    raise SystemExit("End Test")
+    # Get the first key from the dictionary
+    first_key = next(iter(dict_of_response_orders))
+    output.print_section_item(f"[+] First store: {first_key}, First response: {dict_of_response_orders[first_key][0]}", color="green")
+    raise SystemExit("End Test")
+
 
     output.print_section_item("[+] Instantiating Orders into Class Objects...", color="green")
     # Get list of json objects, 1 object for each order
@@ -86,7 +93,6 @@ def set_winning_rate(order):
     #     return True
 
     output.print_section_item(f"[+] Order: {order.order_number}", color="green")
-    raise SystemExit("End Test")
 
     # Get winning UPS rate
     ups_best = order.ups_service.get_ups_best_rate(order)

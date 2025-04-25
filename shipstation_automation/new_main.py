@@ -1,6 +1,6 @@
 from shipstation_automation.utils.output_manager import OutputManager
 import shipstation_automation.functions as functions
-from shipstation_automation.shipstation.api import ShipStation
+from shipstation_automation.integrations.shipstation.v1.api import connect_to_api as ShipStation
 from shipstation_automation.fedex_api import create_fedex_session
 from shipstation_automation.integrations.ups.ups_api import UPSAPIClient
 
@@ -162,6 +162,7 @@ def main(account_name="lentics", batch_size=5):
     Fetches all order IDs first, then processes each order individually.
     """
     try:
+        output.print_banner()
         output.print_section_header("🚀 Running Shipstation...")
         
 
@@ -174,6 +175,11 @@ def main(account_name="lentics", batch_size=5):
         # Fetch all order IDs first
         all_order_ids = list(fetch_all_awaiting_shipment_order_ids())
 
+        output.print_section_item(f"[+] Found {len(all_order_ids)} orders to process", color="green")
+        for order_id in all_order_ids:
+            output.print_section_item(f"  - Order ID: {order_id}", color="green")
+
+        raise SystemExit("End Test")
 
         if not all_order_ids:
             output.print_section_item("[X] No orders to process", color="red")
@@ -212,24 +218,24 @@ def main(account_name="lentics", batch_size=5):
                     output.print_section_item(f"[X] Error fetching order {order_id}: {str(e)}", color="red")
                     continue
             
-            # Process the batch of orders
-            orders = serialization.serialize_orders(
-                initialization.initialize_orders(
-                    batch_orders,
-                    ss_client, fedex_client, ups_client, usps_client
-                ),
-                rule_engine
-            )
+            # # Process the batch of orders
+            # orders = serialization.serialize_orders(
+            #     initialization.initialize_orders(
+            #         batch_orders,
+            #         ss_client, fedex_client, ups_client, usps_client
+            #     ),
+            #     rule_engine
+            # )
 
-            # Filter for valid trading partners
-            valid_orders = [order for order in orders if order.Metainfo.trading_partner in valid_trading_partners]
-            output.print_section_item(f"[+] Found {len(valid_orders)} valid orders in this batch", color="green")
+            # # Filter for valid trading partners
+            # valid_orders = [order for order in orders if order.Metainfo.trading_partner in valid_trading_partners]
+            # output.print_section_item(f"[+] Found {len(valid_orders)} valid orders in this batch", color="green")
 
-            # Process valid orders
-            if valid_orders:
-                process_orders(valid_orders, report)
+            # # Process valid orders
+            # if valid_orders:
+            #     process_orders(valid_orders, report)
             
-            processed_count += len(valid_orders)
+            # processed_count += len(valid_orders)
             output.print_section_item(f"[+] Total processed: {processed_count}/{total_orders}", color="green")
             
             # Force garbage collection between batches

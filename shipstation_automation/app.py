@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 import json, os
-from shipstation_automation.main import main
+from shipstation_automation.new_main import main
 from shipstation_automation.utils.logger import setup_logging
 from shipstation_automation.utils.output_manager import OutputManager
 from shipstation_automation.config.config import ENV

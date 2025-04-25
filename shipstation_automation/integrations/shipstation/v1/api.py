@@ -10,27 +10,17 @@ def get_secret(account_name):
 
     if not account_name:
         raise ValueError("Account name cannot be empty")
+    
+    # Safeguard for the account name
+    account_name = account_name.upper()
 
-    account_name = account_name.lower()  # Normalize input
-    
-    accounts = {
-        'sporticulture': ('SPORTICULTURE_SHIPSTATION_API_KEY', 'SPORTICULTURE_SHIPSTATION_API_SECRET'),
-        'winningstreak': ('WINNINGSTREAK_SHIPSTATION_API_KEY', 'WINNINGSTREAK_SHIPSTATION_API_SECRET'),
-        'stallion': ('STALLION_SHIPSTATION_API_KEY', 'STALLION_SHIPSTATION_API_SECRET')
-    }
-    
-    if account_name not in accounts:
-        raise ValueError(f"Invalid account name: {account_name}")
-    
-    key_env, secret_env = accounts[account_name]
-    api_key = os.getenv(key_env)
-    api_secret = os.getenv(secret_env)
+    api_key = os.getenv("API_KEY_" + account_name)
+    api_secret = os.getenv("API_SECRET_" + account_name)
     
     if not api_key or not api_secret:
         raise ValueError(f"API credentials not found for account: {account_name}")
     
     return api_key, api_secret
-
 
 
 

@@ -31,7 +31,7 @@ def create_clients(account_name="lentics"):
     This function is used to set up the program and intiated the data into python object
     '''
     # Set up the progam and get the list of orders and csv for customer logging
-    functions.print_banner()
+    output.print_banner()
 
     print("======= Starting Initial Setup =======")
 
@@ -39,6 +39,7 @@ def create_clients(account_name="lentics"):
     print("Connecting to the ShipStation API...")
     ss_client = ShipStation(account_name)
     print("[+] Connected to the ShipStation API!\n\n")
+    raise SystemExit("End Test")
     fedex_client = create_fedex_session()
     print("[+] Connected to the FedEx API!\n\n")
     ups_client = UPSAPIClient()
@@ -155,7 +156,7 @@ def fetch_all_awaiting_shipment_order_ids():
         return set()
 
 
-def main(account_name="lentics", batch_size=5):
+def main(account_name="LENTICS_SHIPSTATION", batch_size=5):
 
     """
     Main entry point for the ShipStation processing command.

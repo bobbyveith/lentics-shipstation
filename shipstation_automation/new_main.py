@@ -79,10 +79,10 @@ def fetch_orders_with_retry(ss_client, params, max_retries, delay=2):
 
 def fetch_all_awaiting_shipment_order_ids(ss_client):
     """
-    Fetches all order IDs with 'awaiting_shipment' status from ShipStation.
+    Fetches all orders with 'awaiting_shipment' status from ShipStation.
     
     Returns:
-        set: Set of all order IDs in 'awaiting_shipment' status
+        list: List of dictionaries containing orderID and orderNumber
     """
     try:
         output.print_section_header("🔍 Fetching all awaiting shipment order IDs")
@@ -90,7 +90,7 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
         # Initialize variables
         page = 1
         page_size = 100  # Use larger page size for efficiency when just getting IDs
-        all_order_ids = set()
+        all_orders = []
         has_more_pages = True
         
         # First request to get total pages
@@ -106,7 +106,7 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
         
         if response.status_code != 200:
             output.print_section_item(f"[X] Error fetching orders: {response.status_code}", color="red")
-            return set()
+            return []
             
         page_data = response.json()
         total_pages = page_data.get('pages', 1)
@@ -130,24 +130,27 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
                     
                 page_data = response.json()
             
-            # Extract order IDs from this page
+            # Extract order IDs and numbers from this page
             page_orders = page_data.get('orders', [])
-            page_order_ids = {order.get('orderId') for order in page_orders if order.get('orderId')}
+            page_order_data = [
+                {"orderId": order.get('orderId'), "orderNumber": order.get('orderNumber')} 
+                for order in page_orders if order.get('orderId')
+            ]
             
-            # Add to our set
-            all_order_ids.update(page_order_ids)
+            # Add to our list
+            all_orders.extend(page_order_data)
             
-            output.print_section_item(f"[+] Collected {len(page_order_ids)} order IDs from page {page} (total: {len(all_order_ids)})", color="green")
+            output.print_section_item(f"[+] Collected {len(page_order_data)} orders from page {page} (total: {len(all_orders)})", color="green")
             page += 1
             
         
-        output.print_section_item(f"[+] Successfully collected {len(all_order_ids)} unique order IDs", color="green")
-        return all_order_ids
+        output.print_section_item(f"[+] Successfully collected {len(all_orders)} orders", color="green")
+        return all_orders
         
     except Exception as e:
         output.print_section_item(f"[X] Error fetching order IDs: {str(e)}", color="red")
         traceback.print_exc()
-        return set()
+        return []
 
 
 def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
@@ -168,19 +171,19 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
         #rule_engine = BaseRuleEngine.get_instance(account_name=account_name, account_id=1)
 
         # Fetch all order IDs first
-        all_order_ids = list(fetch_all_awaiting_shipment_order_ids(ss_client))
+        all_orders = fetch_all_awaiting_shipment_order_ids(ss_client)
 
-        output.print_section_item(f"[+] Found {len(all_order_ids)} orders to process", color="green")
-        for order_id in all_order_ids:
-            output.print_section_item(f"  - Order ID: {order_id}", color="green")
+        output.print_section_item(f"[+] Found {len(all_orders)} orders to process", color="green")
+        for order in all_orders:
+            output.print_section_item(f"  - Order ID: {order['orderId']}, Order Number: {order['orderNumber']}", color="green")
 
         raise SystemExit("End Test")
 
-        if not all_order_ids:
+        if not all_orders:
             output.print_section_item("[X] No orders to process", color="red")
             return
             
-        total_orders = len(all_order_ids)
+        total_orders = len(all_orders)
         
         output.print_section_header(f"🔄 Processing {total_orders} orders")
         
@@ -190,7 +193,7 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
         # Process in batches of specified size
         for batch_start in range(0, total_orders, batch_size):
             batch_end = min(batch_start + batch_size, total_orders)
-            batch_ids = all_order_ids[batch_start:batch_end]
+            batch_ids = all_orders[batch_start:batch_end]
             
             output.print_section_item(f"\n[+] Processing batch {batch_start//batch_size + 1}/{(total_orders+batch_size-1)//batch_size} (orders {batch_start+1}-{batch_end} of {total_orders})", color="green")
             

@@ -6,22 +6,41 @@ from shipstation_automation.utils.output_manager import OutputManager
 output = OutputManager(__name__)
 
 def get_secret(account_name):
-    load_dotenv()
-
-    if not account_name:
-        raise ValueError("Account name cannot be empty")
+    """
+    Retrieves API credentials from environment variables.
     
-    # Safeguard for the account name
-    account_name = account_name.upper()
-    output.print_section_item(f"[+] Account name: {account_name}", color="green")
+    Args:
+        account_name (str): The name of the account to get credentials for
+        
+    Returns:
+        tuple: (api_key, api_secret)
+        
+    Raises:
+        ValueError: If account_name is empty or credentials aren't found
+    """
+    try:
+        load_dotenv()
 
-    api_key = os.getenv("API_KEY_" + account_name)
-    api_secret = os.getenv("API_SECRET_" + account_name)
+        if not account_name:
+            error_msg = "Account name cannot be empty"
+            output.print_section_item(f"[X] Error: {error_msg}", color="red")
+            raise ValueError(error_msg)
+        
+        # Safeguard for the account name
+        account_name = account_name.upper()
 
-    if not api_key or not api_secret:
-        raise ValueError(f"API credentials not found for account: {account_name}")
-    
-    return api_key, api_secret
+        api_key = os.getenv("API_KEY_" + account_name)
+        api_secret = os.getenv("API_SECRET_" + account_name)
+
+        if not api_key or not api_secret:
+            error_msg = f"API credentials not found for account: {account_name}"
+            output.print_section_item(f"[X] Error: {error_msg}", color="red")
+            raise ValueError(error_msg)
+        
+        return api_key, api_secret
+    except Exception as e:
+        output.print_section_item(f"[X] Unexpected error getting credentials: {str(e)}", color="red")
+        raise
 
 
 

@@ -4,35 +4,40 @@ from shipstation_automation.usps_api import get_usps_best_rate
 from shipstation_automation.fedex_api import get_fedex_best_rate
 from shipstation_automation.utils.utils import list_account_tags
 import shipstation_automation.customer_log as cl
-
+from shipstation_automation.utils.output_manager import OutputManager
 
 __author__ = ["Bobby Veith"]
 __company__ = "Lentics, Inc."
+
+
+# Set up logging and output manager for this module
+output = OutputManager(__name__)
+
 
 def initial_setup():
     # Print the banner
     functions.print_banner()
 
-    print("======= Starting Initial Setup =======")
+    output.print_section_header("======= Starting Initial Setup =======")
     # Connect to the ShipStation API
     dict_of_ss_clients = functions.connect_to_api()
-    print("[+] Connected to the ShipStation API!\n\n")
+    output.print_section_item("[+] Connected to the ShipStation API!", color="green")
 
     # # Used for debugging only
     # functions.fetch_order(dict_of_ss_clients['lentics'], "111-3451647-5934633")
-    # raise RuntimeError("Quitting...")
+    # raise SystemExit("End Test")
 
-    print("[+] Refreshing Stores & Fetching orders on all SS_Accounts...\n\n")
+    output.print_section_item("[+] Refreshing Stores & Fetching orders on all SS_Accounts...", color="green")
     # Fetch orders from the ShipStation API for both accounts
     dict_of_response_orders = functions.fetch_orders_with_retry(dict_of_ss_clients)
-    print("[+] Fetched orders from the ShipStation API!\n")
+    output.print_section_item("[+] Fetched orders from the ShipStation API!", color="green")
 
 
-    print("[+] Instantiating Orders into Class Objects...\n")
+    output.print_section_item("[+] Instantiating Orders into Class Objects...", color="green")
     # Get list of json objects, 1 object for each order
     list_of_order_objects = functions.decode_response(dict_of_response_orders)
 
-    print("======= Finished Initial Setup =======")
+    output.print_section_header("======= Finished Initial Setup =======")
 
     return list_of_order_objects
 
@@ -43,15 +48,15 @@ retry_list = []
 # =================== CORE PROGRAM FUNCTIONS =============================
 
 def initialize_order(order):
-    print(f"[+] Starting Initialization for order: {order.order_key} | {order.store_name}")
-    print("\n")
+    output.print_section_item(f"[+] Starting Initialization for order: {order.order_key} | {order.store_name}", color="green")
+    output.print_section_item("\n")
     # Multi Orders have unique conditions for setting the Dimensions
     if order.is_multi_order or order.is_double_order:
-        print("This is multi order") 
+        output.print_section_item("This is multi order")
         successful = functions.set_dims_for_multi_order(order)
         if not successful:
             functions.tag_order(order, "No-Dims")
-            functions.print_yellow("[!] Warning: No dims for multi order products, skipping..\n")
+            output.print_section_item("[!] Warning: No dims for multi order products, skipping..\n", log_level="warning", color="yellow")
             return False
 
     if not order.deliver_by_date:
@@ -60,10 +65,10 @@ def initialize_order(order):
         return False
     
     # Get rates for all carriers from ShipStation
-    print("\n[+] Getting Shipstation rates for all carriers...")
+    output.print_section_item("\n[+] Getting Shipstation rates for all carriers...", color="green")
     # Function fails if not dimenstions for order, function tags order with "No_Dims"
     if not functions.get_rates_for_all_carriers(order):
-        functions.print_yellow("[!] Warning: Could not get carrier rates for order, skipping\n")
+        output.print_section_item("[!] Warning: Could not get carrier rates for order, skipping\n", log_level="warning", color="yellow")
         failure = (order, "No SS Carrier Rates") # Can be added in addition to "No-Dims Tag"
         retry_list.append(failure)
         return False
@@ -74,60 +79,60 @@ def initialize_order(order):
 
 def set_winning_rate(order):
             
-            print("[+] Getting API Rates from all carriers...")
-            # When delivery to a PO Box, must use USPS shipping only
-            if functions.is_po_box_delivery(order):
-                order.winning_rate =  get_usps_best_rate(order)
-                return True
+    output.print_section_item("[+] Getting API Rates from all carriers...", color="green")
+    # When delivery to a PO Box, must use USPS shipping only
+    if functions.is_po_box_delivery(order):
+        order.winning_rate =  get_usps_best_rate(order)
+        return True
 
-            # Get winning UPS rate
-            ups_best = order.ups_service.get_ups_best_rate(order)
-            if ups_best is False:
-                failure = (order, "No UPS Rate")
-                retry_list.append(failure)
-                return False
-            print(f"[+] UPS best rate: {ups_best}")
-
-
-            # Get winning USPS rate
-            usps_best = get_usps_best_rate(order)
-            if usps_best is False:
-                failure = (order, "No USPS Rate")
-                retry_list.append(failure)
-                return False
-            print(f"[+] USPS best rate: {usps_best}")
-            
-
-            # Get winning FedEx rate
-            fedex_best = get_fedex_best_rate(order)
-            if fedex_best is False:
-                failure = (order, "No Fedex Rate")
-                retry_list.append(failure)
-                return False
-            print(f"[+] FedEx best rate: {fedex_best}")
+    # Get winning UPS rate
+    ups_best = order.ups_service.get_ups_best_rate(order)
+    if ups_best is False:
+        failure = (order, "No UPS Rate")
+        retry_list.append(failure)
+        return False
+    output.print_section_item(f"[+] UPS best rate: {ups_best}", color="green")
 
 
-            # Compare all the winning rates against each other and update winniner to order.winning_rate
-            functions.get_champion_rate(order, ups_best=ups_best, fedex_best=fedex_best, usps_best=usps_best)
-            print(f"[+] Champion rate: {order.winning_rate}")
-            return True
+    # Get winning USPS rate
+    usps_best = get_usps_best_rate(order)
+    if usps_best is False:
+        failure = (order, "No USPS Rate")
+        retry_list.append(failure)
+        return False
+    output.print_section_item(f"[+] USPS best rate: {usps_best}", color="green")
+    
+
+    # Get winning FedEx rate
+    fedex_best = get_fedex_best_rate(order)
+    if fedex_best is False:
+        failure = (order, "No Fedex Rate")
+        retry_list.append(failure)
+        return False
+    output.print_section_item(f"[+] FedEx best rate: {fedex_best}", color="green")
+
+
+    # Compare all the winning rates against each other and update winniner to order.winning_rate
+    functions.get_champion_rate(order, ups_best=ups_best, fedex_best=fedex_best, usps_best=usps_best)
+    output.print_section_item(f"[+] Champion rate: {order.winning_rate}", color="green")
+    return True
 
 
 
 def set_shipping_for_order(order):
-    print("\n---------- Setting shipping for orders ----------")
-        # Set the shipping for the order
-    print("\n[+] Setting shipping for order: ", order.order_key)
+    output.print_section_header("\n---------- Setting shipping for orders ----------")
+    # Set the shipping for the order
+    output.print_section_item(f"\n[+] Setting shipping for order: {order.order_key}", color="green")
     success = functions.create_or_update_order(order)
     if success:
         functions.tag_order(order, "Ready")
-        functions.print_green("[+] Successfully Updated Carrier on Shipstation")
+        output.print_section_item("[+] Successfully Updated Carrier on Shipstation", color="green")
     else:
-        functions.print_red(f"[X] Order shipping update not successful {order.order_key}")
+        output.print_section_item(f"[X] Order shipping update not successful {order.order_key}", log_level="error", color="red")
         failure = (order, "Shipping not set")
         retry_list.append(failure)
 
-    print("------------next order---------------------\n\n")
+    output.print_section_header("------------next order---------------------\n\n")
     return True
 
 
@@ -181,12 +186,12 @@ def main():
         retry_list = []
         # If orders fail on second attempt, tag them and give up
         for order, reason in reattempt_list: # list of tuples
-            functions.print_yellow(f"[!] Retrying Order: {order.order_key} because {reason}")
+            output.print_section_item(f"[!] Retrying Order: {order.order_key} because {reason}", log_level="warning", color="yellow")
             if reason == "No-DeliveryDate" or reason == "No SS Carrier Rates":
                 successful = full_program(order)
                 if not successful:
                     if functions.tag_order(order, reason):
-                        functions.print_yellow("[!] Order tagged..")
+                        output.print_section_item("[!] Order tagged..", log_level="warning", color="yellow")
                 else:
                     # Process was successful, add Customer data to the log
                     customer_data = cl.parse_customer_data(order)
@@ -196,7 +201,7 @@ def main():
                 successful = half_program(order)
                 if not successful:
                     if functions.tag_order(order, reason):
-                        functions.print_yellow("[!] Order tagged..")
+                        output.print_section_item("[!] Order tagged..", log_level="warning", color="yellow")
                 else:
                     # Process was successful, add Customer data to the log
                     customer_data = cl.parse_customer_data(order)
@@ -206,22 +211,22 @@ def main():
                 successful = set_shipping_for_order(order)
                 if not successful:
                     if functions.tag_order(order, reason):
-                        functions.print_yellow("[!] Order tagged..")
+                        output.print_section_item("[!] Order tagged..", log_level="warning", color="yellow")
                 else:
                     # Process was successful, add Customer data to the log
                     customer_data = cl.parse_customer_data(order)
                     customer_data_log.append(customer_data)  
 
     # Log customer data for all successful order processes
-    print("Logging Customer info...")
+    output.print_section_item("Logging Customer info...", color="green")
     success = cl.log_customer_data(customer_data_log)
     if not success:
-        functions.print_yellow('[!] Warning: Customer Data not Logged!')
+        output.print_section_item('[!] Warning: Customer Data not Logged!', log_level="warning", color="yellow")
 
 if __name__ == "__main__":
     try:
         main()
 
     except Exception as e:
-        print(e)
-        quit(1)
+        output.print_section_item(str(e), log_level="error", color="red")
+        raise SystemExit("End Test")

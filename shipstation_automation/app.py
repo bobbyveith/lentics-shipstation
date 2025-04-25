@@ -94,7 +94,6 @@ def lambda_handler(event, context):
         # Log the start of the process
         output.print_section_header("📋 Processing Shipstation Orders")
         output.print_section_item("Starting main processing function", color="green")
-        raise RuntimeError("End Test")
         
         main()
         

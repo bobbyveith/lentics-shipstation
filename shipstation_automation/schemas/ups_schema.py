@@ -13,8 +13,8 @@ class UPSAuthCredentials:
 class UPSAuthResponse:
     """UPS OAuth response data model"""
     access_token: str
-    token_type: str = "Bearer"
     expires_in: datetime
+    token_type: str = "Bearer"
 
 @dataclass
 class ShipmentOrigin:

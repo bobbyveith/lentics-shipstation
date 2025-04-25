@@ -79,14 +79,19 @@ def initialize_order(order):
 
 def set_winning_rate(order):
             
-    output.print_section_item("[+] Getting API Rates from all carriers...", color="green")
-    # When delivery to a PO Box, must use USPS shipping only
-    if functions.is_po_box_delivery(order):
-        order.winning_rate =  get_usps_best_rate(order)
-        return True
+    # output.print_section_item("[+] Getting API Rates from all carriers...", color="green")
+    # # When delivery to a PO Box, must use USPS shipping only
+    # if functions.is_po_box_delivery(order):
+    #     order.winning_rate =  get_usps_best_rate(order)
+    #     return True
+
+    output.print_section_item(f"[+] Order: {order.order_number}", color="green")
+    raise SystemExit("End Test")
 
     # Get winning UPS rate
     ups_best = order.ups_service.get_ups_best_rate(order)
+    output.print_section_item(f"[+] UPS best rate: {ups_best}", color="green")
+    raise SystemExit("End Test")
     if ups_best is False:
         failure = (order, "No UPS Rate")
         retry_list.append(failure)

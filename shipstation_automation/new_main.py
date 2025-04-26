@@ -152,7 +152,7 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
         traceback.print_exc()
         return []
 
-
+#TODO: create some way to loop through the shipstation accounts
 def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
 
     """

@@ -153,6 +153,7 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
         return []
 
 #TODO: create some way to loop through the shipstation accounts
+#TODO: think about shipstation rules and making a rule engine for each account
 def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
 
     """

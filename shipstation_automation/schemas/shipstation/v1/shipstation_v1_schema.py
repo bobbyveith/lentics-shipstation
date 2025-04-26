@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 class WeightModel(BaseModel):
     """Weight information model"""
     value: float
-    units: str
-    WeightUnits: Optional[int] = None
+    units: str = "ounces"
+    WeightUnits: Optional[int] = 1
 
 
 class DimensionsModel(BaseModel):
@@ -100,7 +100,15 @@ class AdvancedOptionsModel(BaseModel):
 
 
 class ShipmentModel(BaseModel):
-    pass
+    gift: bool = False
+    giftMessage: Optional[str] = None
+    weight: WeightModel
+    insuranceOptions: InsuranceOptionsModel
+    internationalOptions: InternationalOptionsModel
+    smart_post_date = None
+    shippingAmount: float
+    raw_items_list = None
+    ship_to = AddressModel
 
 
 class CustomerModel(BaseModel):
@@ -136,11 +144,8 @@ class ShipstationOrderModel(BaseModel):
     orderTotal: float
     amountPaid: float
     taxAmount: float
-    shippingAmount: float
     customerNotes: Optional[str] = None
     internalNotes: Optional[str] = None
-    gift: bool = False
-    giftMessage: Optional[str] = None
     paymentMethod: str
     requestedShippingService: str
     carrierCode: str
@@ -149,10 +154,7 @@ class ShipstationOrderModel(BaseModel):
     confirmation: str
     shipDate: Optional[str] = None
     holdUntilDate: Optional[str] = None
-    weight: WeightModel
     dimensions: DimensionsModel
-    insuranceOptions: InsuranceOptionsModel
-    internationalOptions: InternationalOptionsModel
     advancedOptions: AdvancedOptionsModel
     tagIds: Optional[List[int]] = None
     userId: Optional[int] = None

@@ -115,7 +115,6 @@ class ShipmentModel(BaseModel):
     weight: WeightModel
     insuranceOptions: InsuranceOptionsModel
     internationalOptions: InternationalOptionsModel
-    smart_post_date = None
     shippingAmount: float
     raw_items_list = None
     ship_to = AddressModel
@@ -132,13 +131,25 @@ class CustomerModel(BaseModel):
     internalNotes: str
     is_residential: bool
 
-    
+
+class MetadataModel(BaseModel):
+    """Metadata model"""
+    rates: Optional[List[RateModel]] = None
+    winning_rate: Optional[RateModel] = None
+    mapping_services: Optional[List[MappingServiceModel]] = None
+    is_multi_order: bool = False
+    is_double_order: bool = False
+    smart_post_date = None
+    deliver_by_date: Optional[str] = None # set to custom field 1 in advanced options, if none set 5 days from now %m/%d/%Y %H:%M:%S
+    holdUntilDate: Optional[str] = None
+
 
 class ShipstationOrderModel(BaseModel):
     """Main Shipstation order model that represents the full API response"""
     Shipment: ShipmentModel
     Customer: CustomerModel
     AdvancedOptions: AdvancedOptionsModel
+    Metadata: MetadataModel
     orderId: int
     orderNumber: str
     storeName: str
@@ -164,8 +175,6 @@ class ShipstationOrderModel(BaseModel):
     packageCode: str
     confirmation: str
     shipDate: Optional[str] = None
-    deliver_by_date: Optional[str] = None # set to custom field 1 in advanced options, if none set 5 days from now %m/%d/%Y %H:%M:%S
-    holdUntilDate: Optional[str] = None
     dimensions: DimensionsModel
     tagIds: Optional[List[int]] = None
     userId: Optional[int] = None
@@ -174,11 +183,6 @@ class ShipstationOrderModel(BaseModel):
     externallyFulfilledById: Optional[int] = None
     externallyFulfilledByName: Optional[str] = None
     labelMessages: Optional[Dict[str, Any]] = None
-    is_multi_order: bool = False
-    is_double_order: bool = False
-    rates: Optional[List[RateModel]] = None
-    winning_rate: Optional[RateModel] = None
-    mapping_services: Optional[List[MappingServiceModel]] = None
 
 
 class ListOrderResponse(BaseModel):

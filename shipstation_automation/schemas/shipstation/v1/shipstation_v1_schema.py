@@ -5,6 +5,16 @@ from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel, Field
 
 
+class MappingServiceModel(BaseModel):
+    pass 
+
+class RateModel(BaseModel):
+    pass
+
+class WinningRateModel(BaseModel):
+    """Weight information model"""
+    pass
+
 class WeightModel(BaseModel):
     """Weight information model"""
     value: float
@@ -80,18 +90,18 @@ class InternationalOptionsModel(BaseModel):
 
 class AdvancedOptionsModel(BaseModel):
     """Advanced options model"""
-    warehouseId: int
+    order_warehouseId: int
     nonMachinable: bool = False
     saturdayDelivery: bool = False
     containsAlcohol: bool = False
     mergedOrSplit: bool = False
     mergedIds: List[int] = []
     parentId: Optional[int] = None
-    storeId: int
+    order_storeId: int
     customField1: Optional[str] = None
     customField2: Optional[str] = None
     customField3: Optional[str] = None
-    source: str
+    order_source: str
     billToParty: Optional[str] = None
     billToAccount: Optional[str] = None
     billToPostalCode: Optional[str] = None
@@ -126,8 +136,9 @@ class CustomerModel(BaseModel):
 
 class ShipstationOrderModel(BaseModel):
     """Main Shipstation order model that represents the full API response"""
-    Customer: CustomerModel
     Shipment: ShipmentModel
+    Customer: CustomerModel
+    AdvancedOptions: AdvancedOptionsModel
     orderId: int
     orderNumber: str
     storeName: str
@@ -153,9 +164,9 @@ class ShipstationOrderModel(BaseModel):
     packageCode: str
     confirmation: str
     shipDate: Optional[str] = None
+    deliver_by_date: Optional[str] = None # set to custom field 1 in advanced options, if none set 5 days from now %m/%d/%Y %H:%M:%S
     holdUntilDate: Optional[str] = None
     dimensions: DimensionsModel
-    advancedOptions: AdvancedOptionsModel
     tagIds: Optional[List[int]] = None
     userId: Optional[int] = None
     externallyFulfilled: bool = False
@@ -163,6 +174,11 @@ class ShipstationOrderModel(BaseModel):
     externallyFulfilledById: Optional[int] = None
     externallyFulfilledByName: Optional[str] = None
     labelMessages: Optional[Dict[str, Any]] = None
+    is_multi_order: bool = False
+    is_double_order: bool = False
+    rates: Optional[List[RateModel]] = None
+    winning_rate: Optional[RateModel] = None
+    mapping_services: Optional[List[MappingServiceModel]] = None
 
 
 class ListOrderResponse(BaseModel):

@@ -127,8 +127,7 @@ class ShipmentModel(ShipStationBaseModel):
     insurance_options: InsuranceOptionsModel
     international_options: InternationalOptionsModel
     shipping_amount: float
-    raw_items_list = None
-    ship_to = AddressModel
+    ship_to: AddressModel
 
 
 class CustomerModel(ShipStationBaseModel):
@@ -150,7 +149,7 @@ class MetadataModel(ShipStationBaseModel):
     mapping_services: Optional[List[MappingServiceModel]] = None
     is_multi_order: bool = False
     is_double_order: bool = False
-    smart_post_date = None
+    smart_post_date: str = None
     deliver_by_date: Optional[str] = None # set to custom field 1 in advanced options, if none set 5 days from now %m/%d/%Y %H:%M:%S
     hold_until_date: Optional[str] = None
 

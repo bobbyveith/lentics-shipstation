@@ -151,6 +151,8 @@ def initialize_orders(batch_orders: List[Dict[str, Any]],
     orders = []
     
     for order_data in batch_orders:
+        output.print_section_item(order_data)
+        raise SystemExit("End Test")
         try:
             # Use the builder to construct the order
             builder = ShipStationOrderBuilder(order_data)

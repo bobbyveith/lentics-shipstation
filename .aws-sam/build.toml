@@ -5,7 +5,7 @@ codeuri = "/Users/bobbyveith/Downloads/Lentics-Shipstation-SAM-CLI/lentics-ships
 runtime = "python3.11"
 architecture = "x86_64"
 handler = "shipstation_automation/app.lambda_handler"
-manifest_hash = "190116b5b1b9bbb60d5fe621e582ef33"
+manifest_hash = "4ed1cd54c747e1d28575b438819832a0"
 packagetype = "Zip"
 functions = ["ShipstationAutomationFunction"]
 

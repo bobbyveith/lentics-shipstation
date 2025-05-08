@@ -171,6 +171,7 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
 
         # Fetch all order IDs first
         all_orders = fetch_all_awaiting_shipment_order_ids(ss_client)
+        all_orders = [all_orders[0]]
 
         if not all_orders:
             output.print_section_item("[X] No orders to process", color="red")

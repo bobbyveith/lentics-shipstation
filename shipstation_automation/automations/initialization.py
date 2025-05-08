@@ -9,7 +9,8 @@ from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import 
     CustomerModel,
     AdvancedOptionsModel,
     MetadataModel,
-    InternationalOptionsModel
+    InternationalOptionsModel,
+    InsuranceOptionsModel
 )
 
 output = OutputManager(__name__)
@@ -27,7 +28,7 @@ class ShipStationOrderBuilder:
             'gift': self.order_data.get('gift', False),
             'giftMessage': self.order_data.get('giftMessage'),
             'weight': self.order_data.get('weight'),
-            'insuranceOptions': self.order_data.get('insuranceOptions'),
+            'insuranceOptions': InsuranceOptionsModel.model_validate(self.order_data.get('insuranceOptions')),
             'internationalOptions': InternationalOptionsModel.model_validate(self.order_data.get('internationalOptions', {})),
             'shippingAmount': self.order_data.get('shippingAmount'),
             'raw_items_list': self.order_data.get('items'),
@@ -152,10 +153,16 @@ def initialize_orders(batch_orders: List[Dict[str, Any]],
     orders = []
     
     for order_data in batch_orders:
+        output.print_section_item(f"Raw Data: {order_data}\n")
         try:
             # Use the builder to construct the order
             builder = ShipStationOrderBuilder(order_data)
             order = builder.build(ss_client, fedex_client, ups_client)
+
+            # Print the entire order to see its attributes and structure
+            output.print_section_item(f"Order Structure:", color="blue")
+            for field_name, field_value in order.model_dump().items():
+                output.print_section_item(f"  {field_name}: {field_value}", color="cyan")
             
             if order:
                 orders.append(order)

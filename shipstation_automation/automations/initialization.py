@@ -8,7 +8,8 @@ from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import 
     ShipmentModel,
     CustomerModel,
     AdvancedOptionsModel,
-    MetadataModel
+    MetadataModel,
+    InternationalOptionsModel
 )
 
 output = OutputManager(__name__)
@@ -27,7 +28,7 @@ class ShipStationOrderBuilder:
             'giftMessage': self.order_data.get('giftMessage'),
             'weight': self.order_data.get('weight'),
             'insuranceOptions': self.order_data.get('insuranceOptions'),
-            'internationalOptions': self.order_data.get('internationalOptions'),
+            'internationalOptions': InternationalOptionsModel.model_validate(self.order_data.get('internationalOptions', {})),
             'shippingAmount': self.order_data.get('shippingAmount'),
             'raw_items_list': self.order_data.get('items'),
             'ship_to': self.order_data.get('shipTo')
@@ -151,8 +152,6 @@ def initialize_orders(batch_orders: List[Dict[str, Any]],
     orders = []
     
     for order_data in batch_orders:
-        output.print_section_item(order_data)
-        raise SystemExit("End Test")
         try:
             # Use the builder to construct the order
             builder = ShipStationOrderBuilder(order_data)

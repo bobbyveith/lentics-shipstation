@@ -56,16 +56,20 @@ class ShipStationOrderBuilder:
         return AdvancedOptionsModel.model_validate(self.order_data.get('advancedOptions', {}))
     
     def build_metadata(self):
-        """Build the metadata component of the order."""
-        metadata_data = {
-            'rates': None,
-            'winning_rate': None,
-            'mapping_services': None,
-            'is_multi_order': False,
-            'is_double_order': False,
-            'smart_post_date': None,
-            'deliver_by_date': self.order_data.get('advancedOptions', {}).get('customField1'),
-            'hold_until_date': None
+        """Build the metadata component of the order.
+    
+        This method initializes the metadata object with only the data that comes from
+        ShipStation's API response. All other metadata fields are left as their default
+        values and will be populated by business logic later in the process.
+        
+        Currently only initializes:
+            - deliver_by_date: From ShipStation's advancedOptions.customField1
+        
+        Returns:
+            MetadataModel: A metadata object with ShipStation data initialized
+        """
+        metadata_data = {      
+            'deliver_by_date': self.order_data.get('advancedOptions', {}).get('customField1')
         }
         return MetadataModel.model_validate(metadata_data)
     

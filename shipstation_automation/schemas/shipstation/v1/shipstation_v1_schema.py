@@ -108,7 +108,7 @@ class AdvancedOptionsModel(ShipStationBaseModel):
     merged_or_split: bool = Field(default=False, alias="mergedOrSplit")
     merged_ids: List[int] = Field(default=[], alias="mergedIds")
     parent_id: Optional[int] = Field(default=None, alias="parentId")
-    order_store_id: int = Field(alias="order_storeId")  # Preserving existing field name
+    store_id: int = Field(alias="storeId")
     custom_field1: Optional[str] = Field(default=None, alias="customField1")
     custom_field2: Optional[str] = Field(default=None, alias="customField2")
     custom_field3: Optional[str] = Field(default=None, alias="customField3")
@@ -143,15 +143,29 @@ class CustomerModel(ShipStationBaseModel):
 
 
 class MetadataModel(ShipStationBaseModel):
-    """Metadata model"""
+    """Business logic metadata model for enriching ShipStation orders.
+    
+    This model contains fields that are populated by our business logic after the initial
+    ShipStation API response. These fields are used to track shipping rates, service mappings,
+    and other business-specific data that helps process the order.
+    
+    Attributes:
+        rates: List of available shipping rates for the order
+        winning_rate: The selected shipping rate for the order
+        mapping_services: List of shipping service mappings
+        is_multi_order: Flag indicating if this is part of a multi-order shipment
+        is_double_order: Flag indicating if this is part of a double-order shipment
+        smart_post_date: Delivery date for FedEx SmartPost orders
+        deliver_by_date: Target delivery date from ShipStation's customField1
+        hold_until_date: Date until which the order should be held
+    """
     rates: Optional[List[RateModel]] = None
     winning_rate: Optional[RateModel] = None
     mapping_services: Optional[List[MappingServiceModel]] = None
     is_multi_order: bool = False
     is_double_order: bool = False
-    smart_post_date: str = None
+    smart_post_date: Optional[str] = None
     deliver_by_date: Optional[str] = None # set to custom field 1 in advanced options, if none set 5 days from now %m/%d/%Y %H:%M:%S
-    hold_until_date: Optional[str] = None
 
 
 class ShipstationOrderModel(ShipStationBaseModel):
@@ -185,6 +199,7 @@ class ShipstationOrderModel(ShipStationBaseModel):
     package_code: Optional[str] = None
     confirmation: Optional[str] = None
     ship_date: Optional[str] = None
+    hold_until_date: Optional[str] = None
     dimensions: DimensionsModel
     tag_ids: Optional[List[int]] = None
     user_id: Optional[int] = None

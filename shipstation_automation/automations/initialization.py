@@ -10,7 +10,8 @@ from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import 
     AdvancedOptionsModel,
     MetadataModel,
     InternationalOptionsModel,
-    InsuranceOptionsModel
+    InsuranceOptionsModel,
+    DimensionsModel
 )
 
 output = OutputManager(__name__)
@@ -113,7 +114,7 @@ class ShipStationOrderBuilder:
                 'packageCode': self.order_data.get('packageCode'),
                 'confirmation': self.order_data.get('confirmation'),
                 'shipDate': self.order_data.get('shipDate'),
-                'dimensions': self.order_data.get('dimensions'),
+                'dimensions': DimensionsModel.model_validate(self.order_data.get('dimensions')),
                 'tagIds': self.order_data.get('tagIds'),
                 'userId': self.order_data.get('userId'),
                 'externallyFulfilled': self.order_data.get('externallyFulfilled'),
@@ -171,7 +172,7 @@ def initialize_orders(batch_orders: List[Dict[str, Any]],
             
             if order:
                 orders.append(order)
-                output.print_section_item(f"[+] Initialized order: {order.orderNumber}", color="green")
+                output.print_section_item(f"[+] Initialized order: {order.order_number}", color="green")
             
         except Exception as e:
             output.print_section_item(f"[X] Error initializing order: {str(e)}", color="red")

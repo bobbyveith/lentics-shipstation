@@ -176,7 +176,7 @@ class ShipstationOrderModel(ShipStationBaseModel):
     metadata: MetadataModel = Field(alias="Metadata")
     order_id: int
     order_number: str
-    store_name: str
+    store_name: str = Field(alias="StoreName")
     order_key: str
     order_date: str
     create_date: str

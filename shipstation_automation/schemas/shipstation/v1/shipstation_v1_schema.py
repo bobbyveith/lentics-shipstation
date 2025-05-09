@@ -58,12 +58,6 @@ class AddressModel(ShipStationBaseModel):
     address_verified: Optional[str] = Field(default=None, alias="addressVerified")
 
 
-class ItemOptionModel(ShipStationBaseModel):
-    """Item option model"""
-    name: Optional[str] = None
-    value: Optional[str] = None
-
-
 class ItemModel(ShipStationBaseModel):
     """Order item model"""
     order_item_id: int
@@ -77,7 +71,7 @@ class ItemModel(ShipStationBaseModel):
     tax_amount: Optional[float] = None
     shipping_amount: Optional[float] = None
     warehouse_location: Optional[str] = ""
-    options: List[ItemOptionModel] = []
+    options: List[Any] = Field(default_factory=list)
     product_id: int
     fulfillment_sku: Optional[str] = None
     adjustment: bool = False
@@ -185,8 +179,6 @@ class ShipstationOrderModel(ShipStationBaseModel):
     payment_date: str = Field(alias="paymentDate")
     ship_by_date: str = Field(alias="shipByDate")
     order_status: str = Field(alias="orderStatus")
-    bill_to: AddressModel = Field(alias="billTo")
-    ship_to: AddressModel = Field(alias="shipTo")
     items: List[ItemModel] = Field(alias="items")
     order_total: Optional[float] = Field(default=None, alias="orderTotal")
     amount_paid: Optional[float] = Field(default=None, alias="amountPaid")

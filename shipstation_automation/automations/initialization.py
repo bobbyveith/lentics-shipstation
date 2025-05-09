@@ -11,7 +11,10 @@ from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import 
     MetadataModel,
     InternationalOptionsModel,
     InsuranceOptionsModel,
-    DimensionsModel
+    DimensionsModel,
+    WeightModel,
+    AddressModel,
+    ItemModel
 )
 
 output = OutputManager(__name__)
@@ -33,7 +36,7 @@ class ShipStationOrderBuilder:
             'internationalOptions': InternationalOptionsModel.model_validate(self.order_data.get('internationalOptions', {})),
             'shippingAmount': self.order_data.get('shippingAmount'),
             'raw_items_list': self.order_data.get('items'),
-            'ship_to': self.order_data.get('shipTo')
+            'ship_to': AddressModel.model_validate(self.order_data.get('shipTo'))
         }
         return ShipmentModel.model_validate(shipment_data)
     
@@ -45,8 +48,8 @@ class ShipStationOrderBuilder:
             'name': self.order_data.get('billTo', {}).get('name'),
             'email': self.order_data.get('customerEmail'),
             'notes': self.order_data.get('customerNotes'),
-            'bill_to_dict': self.order_data.get('billTo'),
-            'ship_to_dict': self.order_data.get('shipTo'),
+            'bill_to_dict': AddressModel.model_validate(self.order_data.get('billTo')),
+            'ship_to_dict': AddressModel.model_validate(self.order_data.get('shipTo')),
             'internal_notes': self.order_data.get('internalNotes'),
             'is_residential': self.order_data.get('billTo', {}).get('residential')
         }
@@ -55,6 +58,16 @@ class ShipStationOrderBuilder:
     def build_advanced_options(self):
         """Build the advanced options component of the order."""
         return AdvancedOptionsModel.model_validate(self.order_data.get('advancedOptions', {}))
+    
+    def build_items(self):
+        """Build the items component of the order."""
+        items = []
+        for item in self.order_data.get('items', []):
+            # Validate weight if it exists
+            if 'weight' in item:
+                item['weight'] = WeightModel.model_validate(item['weight'])
+            items.append(ItemModel.model_validate(item))
+        return items
     
     def build_metadata(self):
         """Build the metadata component of the order.
@@ -78,10 +91,11 @@ class ShipStationOrderBuilder:
         """Build the complete order object."""
         try:
             # Build all components
-            shipment = self.build_shipment()
-            customer = self.build_customer()
-            advanced_options = self.build_advanced_options()
-            metadata = self.build_metadata()
+            shipment: ShipmentModel = self.build_shipment()
+            customer: CustomerModel = self.build_customer()
+            advanced_options: AdvancedOptionsModel = self.build_advanced_options()
+            metadata: MetadataModel = self.build_metadata()
+            items: List[ItemModel] = self.build_items()
             
             # Create the main order object
             order_data = {
@@ -90,6 +104,7 @@ class ShipStationOrderBuilder:
                 'AdvancedOptions': advanced_options,
                 'Metadata': metadata,
                 'storeName': account_name,
+                'items': items,
                 'orderId': self.order_data.get('orderId'),
                 'orderNumber': self.order_data.get('orderNumber'),
                 'orderKey': self.order_data.get('orderKey'),
@@ -99,9 +114,6 @@ class ShipStationOrderBuilder:
                 'paymentDate': self.order_data.get('paymentDate'),
                 'shipByDate': self.order_data.get('shipByDate'),
                 'orderStatus': self.order_data.get('orderStatus'),
-                'billTo': self.order_data.get('billTo'),
-                'shipTo': self.order_data.get('shipTo'),
-                'items': self.order_data.get('items'),
                 'orderTotal': self.order_data.get('orderTotal'),
                 'amountPaid': self.order_data.get('amountPaid'),
                 'taxAmount': self.order_data.get('taxAmount'),

@@ -1,7 +1,7 @@
 """
     This file contains the Pydantic data models for the ShipStation API response.
 """
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 # Helper function to generate camelCase aliases from snake_case
@@ -31,7 +31,7 @@ class WinningRateModel(ShipStationBaseModel):
 class WeightModel(ShipStationBaseModel):
     """Weight information model"""
     value: float
-    units: str = "ounces"
+    units: Literal["ounces", "grams", "pounds"] = "ounces"
     weight_units: Optional[int] = Field(default=1, alias="WeightUnits")  # Capital W needs explicit alias
 
 

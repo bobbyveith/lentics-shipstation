@@ -14,7 +14,8 @@ class ShipStationBaseModel(BaseModel):
     model_config = {
         "populate_by_name": True,
         "alias_generator": to_camel,
-        "allow_population_by_field_name": True
+        "allow_population_by_field_name": True,
+        "extra": "forbid"
     }
 
 class MappingServiceModel(ShipStationBaseModel):

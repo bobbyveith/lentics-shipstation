@@ -35,7 +35,6 @@ class ShipStationOrderBuilder:
             'insuranceOptions': InsuranceOptionsModel.model_validate(self.order_data.get('insuranceOptions')),
             'internationalOptions': InternationalOptionsModel.model_validate(self.order_data.get('internationalOptions', {})),
             'shippingAmount': self.order_data.get('shippingAmount'),
-            'raw_items_list': self.order_data.get('items'),
             'ship_to': AddressModel.model_validate(self.order_data.get('shipTo'))
         }
         return ShipmentModel.model_validate(shipment_data)

@@ -73,7 +73,7 @@ class ShipStationOrderBuilder:
         }
         return MetadataModel.model_validate(metadata_data)
     
-    def build(self, ss_client, fedex_client, ups_client):
+    def build(self, ss_client, fedex_client, ups_client, account_name):
         """Build the complete order object."""
         try:
             # Build all components
@@ -88,9 +88,9 @@ class ShipStationOrderBuilder:
                 'Customer': customer,
                 'AdvancedOptions': advanced_options,
                 'Metadata': metadata,
+                'storeName': account_name,
                 'orderId': self.order_data.get('orderId'),
                 'orderNumber': self.order_data.get('orderNumber'),
-                'storeName': self.order_data.get('storeName'),
                 'orderKey': self.order_data.get('orderKey'),
                 'orderDate': self.order_data.get('orderDate'),
                 'createDate': self.order_data.get('createDate'),
@@ -125,10 +125,10 @@ class ShipStationOrderBuilder:
             
             self.order = ShipstationOrderModel.model_validate(order_data)
             
-            # Add API clients
-            setattr(self.order, 'shipstation_client', ss_client)
-            setattr(self.order, 'fedex_client', fedex_client)
-            setattr(self.order, 'ups_client', ups_client)
+            # # Add API clients
+            # setattr(self.order, 'shipstation_client', ss_client)
+            # setattr(self.order, 'fedex_client', fedex_client)
+            # setattr(self.order, 'ups_client', ups_client)
             
             return self.order
             
@@ -139,7 +139,8 @@ class ShipStationOrderBuilder:
 def initialize_orders(batch_orders: List[Dict[str, Any]], 
                      ss_client, 
                      fedex_client, 
-                     ups_client) -> List[ShipstationOrderModel]:
+                     ups_client,
+                     account_name) -> List[ShipstationOrderModel]:
     """
     Initialize ShipStation order objects from API response data using the Builder pattern.
     
@@ -161,7 +162,7 @@ def initialize_orders(batch_orders: List[Dict[str, Any]],
         try:
             # Use the builder to construct the order
             builder = ShipStationOrderBuilder(order_data)
-            order = builder.build(ss_client, fedex_client, ups_client)
+            order = builder.build(ss_client, fedex_client, ups_client, account_name)
 
             # Print the entire order to see its attributes and structure
             output.print_section_item(f"Order Structure:", color="blue")

@@ -174,40 +174,40 @@ class ShipstationOrderModel(ShipStationBaseModel):
     customer: CustomerModel = Field(alias="Customer")
     advanced_options: AdvancedOptionsModel = Field(alias="AdvancedOptions")
     metadata: MetadataModel = Field(alias="Metadata")
-    order_id: int
-    order_number: str
-    store_name: str = Field(alias="StoreName")
-    order_key: str
-    order_date: str
-    create_date: str
-    modify_date: str
-    payment_date: str
-    ship_by_date: str
-    order_status: str
-    bill_to: AddressModel
-    ship_to: AddressModel
-    items: List[ItemModel]
-    order_total: Optional[float] = None
-    amount_paid: Optional[float] = None
-    tax_amount: Optional[float] = None
-    customer_notes: Optional[str] = None
-    internal_notes: Optional[str] = None
-    payment_method: Optional[str] = None
-    requested_shipping_service: Optional[str] = None
-    carrier_code: Optional[str] = None
-    service_code: Optional[str] = None
-    package_code: Optional[str] = None
-    confirmation: Optional[str] = None
-    ship_date: Optional[str] = None
-    hold_until_date: Optional[str] = None
-    dimensions: DimensionsModel
-    tag_ids: Optional[List[int]] = None
-    user_id: Optional[int] = None
-    externally_fulfilled: bool = False
-    externally_fulfilled_by: Optional[str] = None
-    externally_fulfilled_by_id: Optional[int] = None
-    externally_fulfilled_by_name: Optional[str] = None
-    label_messages: Optional[Dict[str, Any]] = None
+    order_id: int = Field(alias="orderId")
+    order_number: str = Field(alias="orderNumber")
+    store_name: str = Field(alias="storeName")
+    order_key: str = Field(alias="orderKey")
+    order_date: str = Field(alias="orderDate")
+    create_date: str = Field(alias="createDate")
+    modify_date: str = Field(alias="modifyDate")
+    payment_date: str = Field(alias="paymentDate")
+    ship_by_date: str = Field(alias="shipByDate")
+    order_status: str = Field(alias="orderStatus")
+    bill_to: AddressModel = Field(alias="billTo")
+    ship_to: AddressModel = Field(alias="shipTo")
+    items: List[ItemModel] = Field(alias="items")
+    order_total: Optional[float] = Field(default=None, alias="orderTotal")
+    amount_paid: Optional[float] = Field(default=None, alias="amountPaid")
+    tax_amount: Optional[float] = Field(default=None, alias="taxAmount")
+    customer_notes: Optional[str] = Field(default=None, alias="customerNotes")
+    internal_notes: Optional[str] = Field(default=None, alias="internalNotes")
+    payment_method: Optional[str] = Field(default=None, alias="paymentMethod")
+    requested_shipping_service: Optional[str] = Field(default=None, alias="requestedShippingService")
+    carrier_code: Optional[str] = Field(default=None, alias="carrierCode")
+    service_code: Optional[str] = Field(default=None, alias="serviceCode")
+    package_code: Optional[str] = Field(default=None, alias="packageCode")
+    confirmation: Optional[str] = Field(default=None, alias="confirmation")
+    ship_date: Optional[str] = Field(default=None, alias="shipDate")
+    hold_until_date: Optional[str] = Field(default=None, alias="holdUntilDate")
+    dimensions: DimensionsModel = Field(alias="dimensions")
+    tag_ids: Optional[List[int]] = Field(default=None, alias="tagIds")
+    user_id: Optional[int] = Field(default=None, alias="userId")
+    externally_fulfilled: bool = Field(default=False, alias="externallyFulfilled")
+    externally_fulfilled_by: Optional[str] = Field(default=None, alias="externallyFulfilledBy")
+    externally_fulfilled_by_id: Optional[int] = Field(default=None, alias="externallyFulfilledById")
+    externally_fulfilled_by_name: Optional[str] = Field(default=None, alias="externallyFulfilledByName")
+    label_messages: Optional[Dict[str, Any]] = Field(default=None, alias="labelMessages")
 
 
 class ListOrderResponse(ShipStationBaseModel):

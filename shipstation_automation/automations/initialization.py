@@ -130,14 +130,22 @@ class ShipStationOrderBuilder:
         """
         return AdvancedOptionsModel.model_validate(self.order_data.get('advancedOptions', {}))
     
-    def build_items(self):
-        """Build the items component of the order."""
+    def build_items(self) -> List[ItemModel]:
+        """Build and validate order line items with nested components.
+        
+        Returns:
+            List[ItemModel]: Validated order items
+        """
         items = []
         for item in self.order_data.get('items', []):
+            # Create a copy with validated nested models
+            validated_item = item.copy()
+            
             # Validate weight if it exists
-            if 'weight' in item:
-                item['weight'] = WeightModel.model_validate(item['weight'])
-            items.append(ItemModel.model_validate(item))
+            if 'weight' in validated_item:
+                validated_item['weight'] = WeightModel.model_validate(validated_item['weight'])
+            
+            items.append(ItemModel.model_validate(validated_item))
         return items
     
     def build_metadata(self):

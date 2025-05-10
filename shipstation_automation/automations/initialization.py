@@ -29,7 +29,21 @@ class ShipStationOrderBuilder:
         """
         self.order_data = order_data
         self.order = None
+        self.errors = []  # Track errors during build process
+        self.order_id = order_data.get('orderId', 'unknown')
+        self.order_number = order_data.get('orderNumber', 'unknown')
         
+    def log_error(self, component: str, error: Exception) -> None:
+        """Log an error with order context for troubleshooting.
+        
+        Args:
+            component: Name of the component that failed
+            error: The exception that was raised
+        """
+        error_msg = f"Order {self.order_number} (ID: {self.order_id}): Error in {component}: {str(error)}"
+        self.errors.append(error_msg)
+        output.print_section_item(f"[!] {error_msg}", color="yellow")
+    
     def build_customs_items(self, customs_items_data: List[Dict[str, Any]]) -> Optional[List[CustomsItemModel]]:
         """Convert raw customs items data to validated models.
         
@@ -79,30 +93,56 @@ class ShipStationOrderBuilder:
         insurance_data = self.order_data.get('insuranceOptions', {})
         return InsuranceOptionsModel.model_validate(insurance_data)
     
-    def build_shipment(self) -> ShipmentModel:
+    def build_shipment(self) -> Optional[ShipmentModel]:
         """Build complete shipment model with all nested components.
         
         Returns:
-            ShipmentModel: Validated shipment with nested components
+            ShipmentModel: Validated shipment or None if critical validation fails
         """
-        international_options = self.build_international_options()
-        insurance_options = self.build_insurance_options()
-        ship_to = AddressModel.model_validate(self.order_data.get('shipTo', {}))
-        
-        weight_data = self.order_data.get('weight', {})
-        weight = WeightModel.model_validate(weight_data) if weight_data else None
-        
-        shipment_data = {
-            'gift': self.order_data.get('gift', False),
-            'giftMessage': self.order_data.get('giftMessage'),
-            'weight': weight,
-            'insuranceOptions': insurance_options,
-            'internationalOptions': international_options,
-            'shippingAmount': self.order_data.get('shippingAmount'),
-            'ship_to': ship_to
-        }
-        
-        return ShipmentModel.model_validate(shipment_data)
+        try:
+            # Try to build international options
+            try:
+                international_options = self.build_international_options()
+            except Exception as e:
+                self.log_error("international_options", e)
+                # Use empty international options as fallback
+                international_options = InternationalOptionsModel.model_validate({})
+            
+            # Try to build insurance options
+            try:
+                insurance_options = self.build_insurance_options()
+            except Exception as e:
+                self.log_error("insurance_options", e)
+                # Use default insurance options as fallback
+                insurance_options = InsuranceOptionsModel.model_validate({})
+            
+            # This is essential, so we don't provide a fallback
+            ship_to = AddressModel.model_validate(self.order_data.get('shipTo', {}))
+            
+            # Extract validated weight or create a new weight model
+            try:
+                weight_data = self.order_data.get('weight', {})
+                weight = WeightModel.model_validate(weight_data) if weight_data else None
+            except Exception as e:
+                self.log_error("weight", e)
+                # Without valid weight we can't proceed
+                return None
+            
+            shipment_data = {
+                'gift': self.order_data.get('gift', False),
+                'giftMessage': self.order_data.get('giftMessage'),
+                'weight': weight,
+                'insuranceOptions': insurance_options,
+                'internationalOptions': international_options,
+                'shippingAmount': self.order_data.get('shippingAmount'),
+                'ship_to': ship_to
+            }
+            
+            return ShipmentModel.model_validate(shipment_data)
+            
+        except Exception as e:
+            self.log_error("shipment", e)
+            return None
     
     def build_customer(self) -> CustomerModel:
         """Build customer model from order data.
@@ -167,7 +207,7 @@ class ShipStationOrderBuilder:
         return MetadataModel.model_validate(metadata_data)
     
     def build(self, ss_client, fedex_client, ups_client, account_name) -> Optional[ShipstationOrderModel]:
-        """Build complete ShipStation order with all components.
+        """Build complete ShipStation order with error handling for each component.
         
         Args:
             ss_client: ShipStation API client
@@ -176,20 +216,43 @@ class ShipStationOrderBuilder:
             account_name: Store/account name to associate with order
             
         Returns:
-            ShipstationOrderModel: Fully validated order or None if validation fails
-            
-        Raises:
-            No exceptions - errors are logged and None is returned
+            ShipstationOrderModel: Fully validated order or None if critical components fail
         """
-        try:
-            # Build all components
-            shipment = self.build_shipment()
-            customer = self.build_customer()
-            advanced_options = self.build_advanced_options()
-            metadata = self.build_metadata()
-            items = self.build_items()
+        # Reset errors for this build
+        self.errors = []
+        
+        # Build essential components - if these fail, we can't create the order
+        shipment = self.build_shipment()
+        if not shipment:
+            output.print_section_item(f"[X] Failed to build order {self.order_number}: Missing essential shipment data", color="red")
+            return None
             
-            # Create the main order object
+        customer = self.build_customer()
+        if not customer:
+            output.print_section_item(f"[X] Failed to build order {self.order_number}: Missing essential customer data", color="red")
+            return None
+        
+        # Build non-essential components with fallbacks
+        try:
+            advanced_options = self.build_advanced_options()
+        except Exception as e:
+            self.log_error("advanced_options", e)
+            advanced_options = AdvancedOptionsModel.model_validate({})
+        
+        try:
+            metadata = self.build_metadata()
+        except Exception as e:
+            self.log_error("metadata", e)
+            metadata = MetadataModel.model_validate({})
+        
+        try:
+            items = self.build_items()
+        except Exception as e:
+            self.log_error("items", e)
+            items = []
+        
+        # Create the main order object
+        try:
             order_data = {
                 'Shipment': shipment,
                 'Customer': customer,
@@ -197,8 +260,8 @@ class ShipStationOrderBuilder:
                 'Metadata': metadata,
                 'storeName': account_name,
                 'items': items,
-                'orderId': self.order_data.get('orderId'),
-                'orderNumber': self.order_data.get('orderNumber'),
+                'orderId': self.order_id,
+                'orderNumber': self.order_number,
                 'orderKey': self.order_data.get('orderKey'),
                 'orderDate': self.order_data.get('orderDate'),
                 'createDate': self.order_data.get('createDate'),
@@ -230,22 +293,22 @@ class ShipStationOrderBuilder:
             
             self.order = ShipstationOrderModel.model_validate(order_data)
             
-            # # Add API clients
-            # setattr(self.order, 'shipstation_client', ss_client)
-            # setattr(self.order, 'fedex_client', fedex_client)
-            # setattr(self.order, 'ups_client', ups_client)
+            # Report errors if we had any, but still created the order
+            if self.errors:
+                output.print_section_item(f"[!] Order {self.order_number} created with {len(self.errors)} warnings:", color="yellow")
             
             return self.order
             
         except Exception as e:
-            output.print_section_item(f"[X] Error building order: {str(e)}", color="red")
+            self.log_error("final_order_assembly", e)
+            output.print_section_item(f"[X] Failed to build order {self.order_number}: {str(e)}", color="red")
             return None
 
 def initialize_orders(batch_orders: List[Dict[str, Any]], 
-                     ss_client, 
-                     fedex_client, 
-                     ups_client,
-                     account_name) -> List[ShipstationOrderModel]:
+                    ss_client, 
+                    fedex_client, 
+                    ups_client,
+                    account_name) -> List[ShipstationOrderModel]:
     """
     Initialize ShipStation order objects from API response data using the Builder pattern.
     

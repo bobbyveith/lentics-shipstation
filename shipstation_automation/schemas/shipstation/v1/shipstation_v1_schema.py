@@ -4,6 +4,15 @@
 from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
+from shipstation_automation.schemas.shipstation.v1.shipstation_v1_enums import (
+    WeightUnit,
+    DimensionsUnit,
+    OrderStatus,
+    ConfirmationType,
+    Contents,
+    NonDeliveryOption
+)
+
 # Helper function to generate camelCase aliases from snake_case
 def to_camel(snake_str):
     components = snake_str.split('_')
@@ -31,13 +40,13 @@ class WinningRateModel(ShipStationBaseModel):
 class WeightModel(ShipStationBaseModel):
     """Weight information model"""
     value: float
-    units: Literal["ounces", "grams", "pounds"] = "ounces"
+    units: WeightUnit = WeightUnit.OUNCES
     weight_units: Optional[int] = Field(default=1, alias="WeightUnits")  # Capital W needs explicit alias
 
 
 class DimensionsModel(ShipStationBaseModel):
     """Dimensions information model"""
-    units: Optional[str] = None
+    units: DimensionsUnit = DimensionsUnit.INCHES
     length: Optional[float] = None
     width: Optional[float] = None
     height: Optional[float] = None
@@ -88,11 +97,26 @@ class InsuranceOptionsModel(ShipStationBaseModel):
     insured_value: float = 0.0
 
 
+class CustomsItemModel(ShipStationBaseModel):
+    """
+    Customs Item model for international shipments.
+    
+    Represents a single line item in a customs declaration for international shipments.
+    See: https://www.shipstation.com/docs/api/models/customs-item/
+    """
+    customs_item_id: Optional[str] = Field(default=None, alias="customsItemId")
+    description: str
+    quantity: float
+    value: float
+    harmonized_tariff_code: Optional[str] = Field(default=None, alias="harmonizedTariffCode")
+    country_of_origin: str = Field(alias="countryOfOrigin")
+    
+
 class InternationalOptionsModel(ShipStationBaseModel):
     """International options model"""
-    contents: Optional[str] = None
-    customs_items: Optional[List[Any]] = None
-    non_delivery: Optional[str] = None
+    contents: Optional[Contents] = None
+    customs_items: Optional[List[CustomsItemModel]] = None  
+    non_delivery: Optional[NonDeliveryOption] = Field(default=None, alias="nonDelivery")
 
 
 class AdvancedOptionsModel(ShipStationBaseModel):
@@ -179,7 +203,7 @@ class ShipstationOrderModel(ShipStationBaseModel):
     modify_date: str = Field(alias="modifyDate")
     payment_date: str = Field(alias="paymentDate")
     ship_by_date: str = Field(alias="shipByDate")
-    order_status: str = Field(alias="orderStatus")
+    order_status: OrderStatus = Field(default=OrderStatus.AWAITING_SHIPMENT, alias="orderStatus")
     items: List[ItemModel] = Field(alias="items")
     order_total: Optional[float] = Field(default=None, alias="orderTotal")
     amount_paid: Optional[float] = Field(default=None, alias="amountPaid")
@@ -191,7 +215,7 @@ class ShipstationOrderModel(ShipStationBaseModel):
     carrier_code: Optional[str] = Field(default=None, alias="carrierCode")
     service_code: Optional[str] = Field(default=None, alias="serviceCode")
     package_code: Optional[str] = Field(default=None, alias="packageCode")
-    confirmation: Optional[str] = Field(default=None, alias="confirmation")
+    confirmation: Optional[ConfirmationType] = Field(default=None, alias="confirmation")
     ship_date: Optional[str] = Field(default=None, alias="shipDate")
     hold_until_date: Optional[str] = Field(default=None, alias="holdUntilDate")
     dimensions: DimensionsModel = Field(alias="dimensions")

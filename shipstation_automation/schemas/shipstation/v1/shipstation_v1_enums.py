@@ -5,7 +5,6 @@ class WeightUnit(str, Enum):
     OUNCES = "ounces"
     POUNDS = "pounds"
     GRAMS = "grams"
-    KILOGRAMS = "kilograms"
 
 class DimensionsUnit(str, Enum):
     INCHES = "inches"

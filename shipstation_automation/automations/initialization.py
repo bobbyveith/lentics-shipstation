@@ -119,8 +119,7 @@ class ShipStationOrderBuilder:
             'name': self.order_data.get('billTo', {}).get('name'),
             'email': self.order_data.get('customerEmail'),
             'notes': self.order_data.get('customerNotes'),
-            'bill_to_dict': AddressModel.model_validate(self.order_data.get('billTo')),
-            'ship_to_dict': AddressModel.model_validate(self.order_data.get('shipTo')),
+            'bill_to': AddressModel.model_validate(self.order_data.get('billTo')),
             'internal_notes': self.order_data.get('internalNotes'),
             'is_residential': self.order_data.get('billTo', {}).get('residential')
         }

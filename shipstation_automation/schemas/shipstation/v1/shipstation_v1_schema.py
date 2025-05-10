@@ -110,7 +110,7 @@ class CustomsItemModel(ShipStationBaseModel):
     value: float
     harmonized_tariff_code: Optional[str] = Field(default=None, alias="harmonizedTariffCode")
     country_of_origin: str = Field(alias="countryOfOrigin")
-    
+
 
 class InternationalOptionsModel(ShipStationBaseModel):
     """International options model"""
@@ -157,8 +157,7 @@ class CustomerModel(ShipStationBaseModel):
     email: Optional[str] = None
     notes: Optional[str] = None
     internal_notes: Optional[str] = None
-    bill_to_dict: AddressModel
-    ship_to_dict: AddressModel
+    bill_to: AddressModel
     is_residential: Optional[bool] = Field(default=True, alias="isResidential")
 
 

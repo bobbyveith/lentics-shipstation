@@ -1,7 +1,5 @@
-"""
-This module contains initialization functions for ShipStation orders.
-"""
-from typing import List, Dict, Any
+"""Initialization functions for ShipStation orders using the builder pattern."""
+from typing import List, Dict, Any, Optional
 from shipstation_automation.utils.output_manager import OutputManager
 from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import (
     ShipstationOrderModel, 
@@ -21,21 +19,25 @@ from shipstation_automation.schemas.shipstation.v1.shipstation_v1_schema import 
 output = OutputManager(__name__)
 
 class ShipStationOrderBuilder:
-    """Builder for constructing ShipStation order objects."""
+    """Builder for constructing validated ShipStation order objects."""
     
     def __init__(self, order_data: Dict[str, Any]):
+        """Initialize the builder with raw order data.
+        
+        Args:
+            order_data: Raw JSON dictionary from ShipStation API
+        """
         self.order_data = order_data
         self.order = None
         
-    def build_customs_items(self, customs_items_data: List[Dict[str, Any]]) -> List[CustomsItemModel]:
-        """
-        Build the customs items component of international options.
+    def build_customs_items(self, customs_items_data: List[Dict[str, Any]]) -> Optional[List[CustomsItemModel]]:
+        """Convert raw customs items data to validated models.
         
         Args:
             customs_items_data: List of customs item dictionaries
             
         Returns:
-            List of validated CustomsItemModel objects
+            List[CustomsItemModel]: Validated customs items or None if no data
         """
         if not customs_items_data:
             return None
@@ -48,23 +50,18 @@ class ShipStationOrderBuilder:
         return customs_items
     
     def build_international_options(self) -> InternationalOptionsModel:
-        """
-        Build the international options component of the shipment.
+        """Build international shipping options from order data.
         
         Returns:
-            Validated InternationalOptionsModel object
+            InternationalOptionsModel: Validated model with contents, customs items and delivery options
         """
         int_options_data = self.order_data.get('internationalOptions', {})
         if not int_options_data:
             return InternationalOptionsModel.model_validate({})
             
-        # Extract and validate customs items separately if they exist
-        customs_items_data = int_options_data.get('customsItems')
-        customs_items = None
-        if customs_items_data:
-            customs_items = self.build_customs_items(customs_items_data)
+        customs_items_data = int_options_data.get('customsItems', [])
+        customs_items = self.build_customs_items(customs_items_data) if customs_items_data else None
             
-        # Build the international options model
         int_options = {
             'contents': int_options_data.get('contents'),
             'customsItems': customs_items,
@@ -74,28 +71,24 @@ class ShipStationOrderBuilder:
         return InternationalOptionsModel.model_validate(int_options)
     
     def build_insurance_options(self) -> InsuranceOptionsModel:
-        """
-        Build the insurance options component of the shipment.
+        """Build insurance options model from order data.
         
         Returns:
-            Validated InsuranceOptionsModel object
+            InsuranceOptionsModel: Validated insurance options
         """
         insurance_data = self.order_data.get('insuranceOptions', {})
         return InsuranceOptionsModel.model_validate(insurance_data)
     
     def build_shipment(self) -> ShipmentModel:
-        """
-        Build the shipment component of the order.
+        """Build complete shipment model with all nested components.
         
         Returns:
-            Validated ShipmentModel object
+            ShipmentModel: Validated shipment with nested components
         """
-        # Build nested components first
         international_options = self.build_international_options()
         insurance_options = self.build_insurance_options()
         ship_to = AddressModel.model_validate(self.order_data.get('shipTo', {}))
         
-        # Extract validated weight or create a new weight model
         weight_data = self.order_data.get('weight', {})
         weight = WeightModel.model_validate(weight_data) if weight_data else None
         
@@ -111,22 +104,30 @@ class ShipStationOrderBuilder:
         
         return ShipmentModel.model_validate(shipment_data)
     
-    def build_customer(self):
-        """Build the customer component of the order."""
+    def build_customer(self) -> CustomerModel:
+        """Build customer model from order data.
+        
+        Returns:
+            CustomerModel: Validated customer information
+        """
         customer_data = {
             'id': self.order_data.get('customerId'),
             'username': self.order_data.get('customerUsername'),
             'name': self.order_data.get('billTo', {}).get('name'),
             'email': self.order_data.get('customerEmail'),
-            'notes': self.order_data.get('customerNotes'),
-            'bill_to': AddressModel.model_validate(self.order_data.get('billTo')),
-            'internal_notes': self.order_data.get('internalNotes'),
-            'is_residential': self.order_data.get('billTo', {}).get('residential')
+            'notes': self.order_data.get('customerNotes', None),
+            'bill_to': AddressModel.model_validate(self.order_data.get('billTo', {})),
+            'internal_notes': self.order_data.get('internalNotes', None),
+            'is_residential': self.order_data.get('billTo', {}).get('residential', True)
         }
         return CustomerModel.model_validate(customer_data)
     
-    def build_advanced_options(self):
-        """Build the advanced options component of the order."""
+    def build_advanced_options(self) -> AdvancedOptionsModel:
+        """Build advanced options model from order data.
+        
+        Returns:
+            AdvancedOptionsModel: Validated advanced options settings
+        """
         return AdvancedOptionsModel.model_validate(self.order_data.get('advancedOptions', {}))
     
     def build_items(self):
@@ -157,8 +158,21 @@ class ShipStationOrderBuilder:
         }
         return MetadataModel.model_validate(metadata_data)
     
-    def build(self, ss_client, fedex_client, ups_client, account_name):
-        """Build the complete order object."""
+    def build(self, ss_client, fedex_client, ups_client, account_name) -> Optional[ShipstationOrderModel]:
+        """Build complete ShipStation order with all components.
+        
+        Args:
+            ss_client: ShipStation API client
+            fedex_client: FedEx API client
+            ups_client: UPS API client
+            account_name: Store/account name to associate with order
+            
+        Returns:
+            ShipstationOrderModel: Fully validated order or None if validation fails
+            
+        Raises:
+            No exceptions - errors are logged and None is returned
+        """
         try:
             # Build all components
             shipment = self.build_shipment()

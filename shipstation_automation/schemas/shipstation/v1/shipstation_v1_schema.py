@@ -18,8 +18,9 @@ def to_camel(snake_str):
     components = snake_str.split('_')
     return components[0] + ''.join(x.title() for x in components[1:])
 
-# Base model with camelCase alias config
+
 class ShipStationBaseModel(BaseModel):
+    """Base model with camelCase aliases and strict validation."""
     model_config = {
         "populate_by_name": True,
         "alias_generator": to_camel,
@@ -34,18 +35,17 @@ class RateModel(ShipStationBaseModel):
     pass
 
 class WinningRateModel(ShipStationBaseModel):
-    """Weight information model"""
     pass
 
 class WeightModel(ShipStationBaseModel):
-    """Weight information model"""
+    """Weight information with unit conversion support."""
     value: float
     units: WeightUnit = WeightUnit.OUNCES
     weight_units: Optional[int] = Field(default=1, alias="WeightUnits")  # Capital W needs explicit alias
 
 
 class DimensionsModel(ShipStationBaseModel):
-    """Dimensions information model"""
+    """Package dimensions with unit support."""
     units: DimensionsUnit = DimensionsUnit.INCHES
     length: Optional[float] = None
     width: Optional[float] = None
@@ -53,7 +53,7 @@ class DimensionsModel(ShipStationBaseModel):
 
 
 class AddressModel(ShipStationBaseModel):
-    """Address information model"""
+    """Shipping or billing address with validation."""
     name: str
     company: Optional[str] = None
     street_1: str = Field(alias="street1")
@@ -69,7 +69,7 @@ class AddressModel(ShipStationBaseModel):
 
 
 class ItemModel(ShipStationBaseModel):
-    """Order item model"""
+    """Order line item with product details."""
     order_item_id: int
     line_item_key: Optional[str] = None
     sku: str
@@ -91,19 +91,14 @@ class ItemModel(ShipStationBaseModel):
 
 
 class InsuranceOptionsModel(ShipStationBaseModel):
-    """Insurance options model"""
+    """Shipping insurance options for packages."""
     provider: Optional[str] = None
     insure_shipment: bool = False
     insured_value: float = 0.0
 
 
 class CustomsItemModel(ShipStationBaseModel):
-    """
-    Customs Item model for international shipments.
-    
-    Represents a single line item in a customs declaration for international shipments.
-    See: https://www.shipstation.com/docs/api/models/customs-item/
-    """
+    """Customs declaration item for international shipments."""
     customs_item_id: Optional[str] = Field(default=None, alias="customsItemId")
     description: str
     quantity: float
@@ -113,14 +108,14 @@ class CustomsItemModel(ShipStationBaseModel):
 
 
 class InternationalOptionsModel(ShipStationBaseModel):
-    """International options model"""
+    """International shipping options and customs information."""
     contents: Optional[Contents] = None
     customs_items: Optional[List[CustomsItemModel]] = None  
     non_delivery: Optional[NonDeliveryOption] = Field(default=None, alias="nonDelivery")
 
 
 class AdvancedOptionsModel(ShipStationBaseModel):
-    """Advanced options model"""
+    """Advanced shipping and order options."""
     warehouse_id: int = Field(alias="warehouseId")
     non_machinable: bool = Field(default=False, alias="nonMachinable")
     saturday_delivery: bool = Field(default=False, alias="saturdayDelivery")
@@ -141,6 +136,7 @@ class AdvancedOptionsModel(ShipStationBaseModel):
 
 
 class ShipmentModel(ShipStationBaseModel):
+    """Complete shipment information including address and services."""
     gift: bool = False
     gift_message: Optional[str] = Field(default=None, alias="giftMessage")
     weight: WeightModel
@@ -151,6 +147,7 @@ class ShipmentModel(ShipStationBaseModel):
 
 
 class CustomerModel(ShipStationBaseModel):
+    """Customer information with shipping preferences."""
     id: int
     username: Optional[str] = None
     name: Optional[str] = None

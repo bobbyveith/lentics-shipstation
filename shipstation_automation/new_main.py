@@ -154,7 +154,7 @@ def fetch_all_awaiting_shipment_order_ids(ss_client):
 
 #TODO: create some way to loop through the shipstation accounts
 #TODO: think about shipstation rules and making a rule engine for each account
-def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
+def main(account_name="LENTICS_SHIPSTATION", batch_size=5):
 
     """
     Main entry point for the ShipStation processing command.
@@ -211,7 +211,7 @@ def main(account_name="NUVEAU_SHIPSTATION", batch_size=5):
                     continue
             
             # Process the batch of orders
-            orders = initialize_orders(batch_orders, ss_client, fedex_client, ups_client, account_name)
+            orders = initialize_orders(batch_orders, account_name)
 
             # # Filter for valid trading partners
             # valid_orders = [order for order in orders if order.Metainfo.trading_partner in valid_trading_partners]

@@ -57,12 +57,12 @@ class AddressModel(ShipStationBaseModel):
     name: str
     company: Optional[str] = None
     street_1: str = Field(alias="street1")
-    street_2: Optional[str] = Field(default="", alias="street2")
-    street_3: Optional[str] = Field(default="", alias="street3")
-    city: str
-    state: str
-    postal_code: str = Field(alias="postalCode")
-    country: str
+    street_2: Optional[str] = Field(default=None, alias="street2")
+    street_3: Optional[str] = Field(default=None, alias="street3")
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
     phone: Optional[str] = None
     residential: Optional[bool] = True
     address_verified: Optional[str] = Field(default=None, alias="addressVerified")
@@ -148,7 +148,7 @@ class ShipmentModel(ShipStationBaseModel):
 
 class CustomerModel(ShipStationBaseModel):
     """Customer information with shipping preferences."""
-    id: int
+    id: Optional[int] = None
     username: Optional[str] = None
     name: Optional[str] = None
     email: Optional[str] = None
@@ -198,7 +198,7 @@ class ShipstationOrderModel(ShipStationBaseModel):
     create_date: str = Field(alias="createDate")
     modify_date: str = Field(alias="modifyDate")
     payment_date: str = Field(alias="paymentDate")
-    ship_by_date: str = Field(alias="shipByDate")
+    ship_by_date: Optional[str] = Field(default=None, alias="shipByDate")
     order_status: OrderStatus = Field(default=OrderStatus.AWAITING_SHIPMENT, alias="orderStatus")
     items: List[ItemModel] = Field(alias="items")
     order_total: Optional[float] = Field(default=None, alias="orderTotal")
